@@ -61,7 +61,6 @@ def split_line(line):
 	on failure: returns {}
 '''
 def map_event(line):
-	
 	#initial key-values
 	event = {
 		'time': datetime.now().timestamp(),
@@ -70,11 +69,11 @@ def map_event(line):
 
 	if line.startswith('Attack From'):
 		# example, Attack From: 131.252.50.27; Client protocol version 2.0; client software version OpenSSH_7.4; Remote port: 50597; Local port: 22
-		raw_event = line.split(' ')
+		raw_event = line.replace(';','').split(' ')
 		event['remote_ip'] = raw_event[2]
 		event['local_port'] =  raw_event[16]
 		event['remote_port'] =  raw_event[13]
-		event['protocol_specs'] = 'protocol version {} client software{}'.format(raw_event[6], raw_event[10])
+		event['description'] = 'protocol version {} client software{}'.format(raw_event[6], raw_event[10])
 		event['type'] = 'connect'
 	elif line.startswith('IP'):
 		# example, IP: 131.252.50.27 PassLog: Username: keene Password: kmkm
@@ -101,6 +100,7 @@ def map_event(line):
 		event.update(_remote_data)
 		return event
 	else:
+		print('failed to get event {}'.format(event))
 		return {}
 
 
@@ -146,7 +146,7 @@ def main():
 
 	for line in tail('-f', log_file, _iter=True):
 		# avoid wasting resources on invalid lines
-		if 'IP' not in line and 'Attack from' not in line and 'reverse mapping' not in line:
+		if 'IP' not in line and 'Attack From' not in line and 'reverse mapping' not in line:
 			continue
 		#strip endlines and split
 		line = line.replace('\n','')
