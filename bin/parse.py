@@ -73,7 +73,7 @@ def map_event(line):
 		event['remote_ip'] = raw_event[2]
 		event['local_port'] =  raw_event[16]
 		event['remote_port'] =  raw_event[13]
-		event['description'] = 'protocol version {} client software{}'.format(raw_event[6], raw_event[10])
+		event['description'] = 'protocol version {}; client software {}'.format(raw_event[6], raw_event[10])
 		event['type'] = 'connect'
 	elif line.startswith('IP'):
 		# example, IP: 131.252.50.27 PassLog: Username: keene Password: kmkm
