@@ -15,7 +15,7 @@ var server = express();
 
 // server and middleware for both url-encoded and json POST decoding
 // and serving static content
-server.use(parser.urlencoded({'extended': false}));
+server.use(parser.urlencoded({'extended': false, 'limit': 1024}));
 server.use(parser.json());
 server.use('/', express.static(__dirname + '/static/'));
 
@@ -67,22 +67,28 @@ server.get('/events', function(req, res) {
 		if(err){
 			res.status(500);
 			res.send({
-				"error": JSON.stringify(err),
+				"error": err,
 				"events": []
 			});
 		} 
 		else {
-			var events = [];
-			rows.forEach(function(row, index, arr){
-				events.push(row);
-			});
 			res.status(200);
 			res.send({
 				"error": null,
-				"events": events
+				"events": rows
 			});
 		}
 	});
+});
+
+//GET specific event details
+server.get('/events/location', function(req, res) {
+	res.set({
+		'Content-Type': 'application/text'
+	});
+
+	res.status(200);
+	res.send('recieved request');
 });
 
 //app kick off!
