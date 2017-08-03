@@ -74,7 +74,7 @@ server.get('/events', function(req, res) {
 		else {
 			var events = [];
 			rows.forEach(function(row, index, arr){
-				events.push(JSON.stringify(row));
+				events.push(row);
 			});
 			res.status(200);
 			res.send({
