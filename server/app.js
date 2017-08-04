@@ -30,7 +30,7 @@ server.get('/', function(req, res) {
 	res.send('welcome to the events server');
 });
 
-//POST events for storage
+//POST event for storage
 //this could use some work on error checking
 server.post('/event', function(req, res) {
 
@@ -56,7 +56,7 @@ server.post('/event', function(req, res) {
 	res.send('ok');
 });
 
-//GET events from storage
+//GET all events from storage
 server.get('/events', function(req, res) {
 
 	res.set({
@@ -82,13 +82,27 @@ server.get('/events', function(req, res) {
 });
 
 //GET specific event details
-server.get('/events/location', function(req, res) {
+server.get('/events/locations', function(req, res) {
 	res.set({
-		'Content-Type': 'application/text'
+		'Content-Type': 'application/json'
 	});
 
-	res.status(200);
-	res.send('recieved request');
+	db.all("SELECT remote_longitude, remote_latitude, service, remote_city, count(case when type='connect' then 1 else null end) as connect_events, count(case when type='password' then 1 else null end) as password_events, count(case when type='reverse mapping' then 1 else null end) as reverse_mapping_events, count(*) as total_events FROM events GROUP BY remote_latitude, remote_longitude", function(err, rows){
+		if(err){
+			res.status(500);
+			res.send({
+				"error": err,
+				"events": []
+			});
+		} 
+		else {
+			res.status(200);
+			res.send({
+				"error": null,
+				"events": rows
+			});
+		}
+	});
 });
 
 //app kick off!
