@@ -22,8 +22,9 @@
 		<script src="/config.js"></script> 
 
 		<!-- socket -->
-		
 		<script src="/socket.io/socket.io.js"></script>
+
+
 		<style type="text/css">
 			#chartdiv {
 			  width: 80%;
@@ -143,15 +144,25 @@
 
 		//this is the object used to handle incoming events
 		var globalEvents = {
-			queue: ["something non null"],
-			flag: false
+			queue: [],
+			//flag: false
 		};
 
 		//socket stuff
 		var socket = io.connect('http://localhost:8080/');	//to be initialzed post render
 		socket.on('event', function(eventData){
 			//eventData should be exactly what is delievered to the server
-			console.log('Socket recieved an event: ' + eventData);
+			console.log('Socket recieved an event: ' + Object.keys(eventData));
+			console.log([event.host_latitude, event.remote_latitude]);
+
+			globalEvents.queue = [eventData].concat(globalEvents.queue);
+
+			console.log(globalEvents.queue);
+			//if not currently drawing, we need to kick it off
+			if(!globalEvents.flag){
+				globalEvents.flag = true;
+				updateMapEvents(map);
+			}
 		});
 
 
@@ -162,12 +173,12 @@
 			if(globalEvents.queue.length > 0){
 
 				//update map to draw next event
-				event = globalEventQueue.pop();
+				event = globalEvents.queue.pop();
 
 				//set new line
 				var animationLine = chart.getObjectById("animationLine");
-				animationLine.latitudes = [0, 100];
-				animationLine.longitudes = [0, 200];
+				animationLine.latitudes = [event.host_latitude, event.remote_latitude];
+				animationLine.longitudes = [event.host_longitude, event.remote_longitude];
 				chart.validateData();
 
 				//animate image

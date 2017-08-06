@@ -1,12 +1,17 @@
 'use strict';
 
-//module import and init.
-var express = require('express');
+//package imports
 var parser = require('body-parser');
 var sqlite3 = require('sqlite3').verbose();
 var moment = require('moment');
 var mustache = require('mustache');
 var fs = require('fs');
+//... and inits
+var express = require('express')
+var app = express();
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
 
 //database init (create if it does not exist)
 var db = new sqlite3.Database('events.db');
@@ -14,28 +19,34 @@ db.run("CREATE TABLE IF NOT EXISTS events (time TEXT, remote_ip TEXT, host_ip TE
 
 
 
-var server = express();
-
-// server and middleware for both url-encoded and json POST decoding
+// app and middleware for both url-encoded and json POST decoding
 // and serving static content
-server.use(parser.urlencoded({'extended': false, 'limit': 1024}));
-server.use(parser.json());
-server.use('/', express.static(__dirname + '/static/'));
+app.use(parser.urlencoded({'extended': false, 'limit': 1024}));
+app.use(parser.json());
+app.use('/', express.static(__dirname + '/static/'));
+
+
+// socket stuff
+io.on('connection', function(clientSocket){
+	console.log('connection');
+	//do nothing
+});
+
 
 //basic root
-server.get('/', function(req, res) {
-
+app.get('/', function(req, res) {
+	io.emit('event', {'hey' : 'there'})
 	res.status(200);
 	res.set({
 		'Content-type': 'text/plain'
 	});
 
-	res.send('welcome to the events server');
+	res.send('welcome to the events app');
 });
 
 //POST event for storage
 //this could use some work on error checking
-server.post('/event', function(req, res) {
+app.post('/event', function(req, res) {
 
 	res.status(200);
 	res.set({
@@ -56,11 +67,13 @@ server.post('/event', function(req, res) {
 		stmt.finalize();
 	}); //end insert
 
+	io.emit('event', req.body);
+
 	res.send('ok');
 });
 
 //POST event for storage
-server.get('/event', function(req, res) {
+app.get('/event', function(req, res) {
 
 	if(!req.query.longitude || !req.query.latitude){
 		res.status(400);
@@ -117,7 +130,7 @@ server.get('/event', function(req, res) {
 
 //GET all events from storage
 //currently broken
-server.get('/events', function(req, res) {
+app.get('/events', function(req, res) {
 
 	res.set({
 		'Content-Type': 'application/json'
@@ -142,7 +155,7 @@ server.get('/events', function(req, res) {
 });
 
 //GET event details grouped by location
-server.get('/events/locations', function(req, res) {
+app.get('/events/locations', function(req, res) {
 	res.set({
 		'Content-Type': 'application/json'
 	});
@@ -167,7 +180,7 @@ server.get('/events/locations', function(req, res) {
 
 //GET event count by the hour
 //this is pretty inefficient...
-server.get('/events/count', function(req, res) {
+app.get('/events/count', function(req, res) {
 	
 	res.set({
 		'Content-Type': 'application/json'
