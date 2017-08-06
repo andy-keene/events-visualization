@@ -4,6 +4,9 @@
 var express = require('express');
 var parser = require('body-parser');
 var sqlite3 = require('sqlite3').verbose();
+var moment = require('moment');
+var mustache = require('mustache');
+var fs = require('fs');
 
 //database init (create if it does not exist)
 var db = new sqlite3.Database('events.db');
@@ -56,7 +59,71 @@ server.post('/event', function(req, res) {
 	res.send('ok');
 });
 
+//POST event for storage
+server.get('/event', function(req, res) {
+
+	if(!req.query.longitude || !req.query.latitude){
+		res.status(400);
+		res.set({
+			'Content-Type': 'text/plain'
+		});
+		res.send('bad query!');
+	}
+	else {
+	
+		db.serialize(function() {
+			var stmt = db.prepare("SELECT * from events WHERE remote_longitude=? AND remote_latitude=?");
+			stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
+				if(err){
+					res.status(500);
+					res.set({
+						'Content-Type': 'application/text'
+					});
+					res.send('something went wrong');
+				}
+				else {
+					res.status(200);
+					res.set({
+						'Content-Type': 'text/html'
+					});
+					fs.readFile('./static/eventTable.html', function(err, data) {
+
+						//console.log(rows[1]);
+						res.write(mustache.render(data.toString(), {
+							'events': rows,
+							//'city': rows[0].city,
+							//'country': 
+							'functionName': function() {
+								return console.log('hi');
+							},
+							'functionTime': function(){
+								return function(time, render){
+									return moment.unix(render(time)).format('HH:mm:ss');
+								}
+							},
+							'functionDate': function(){
+								return function(time, render){
+									console.log(render(time));
+									console.log(time);
+									return moment.unix(render(time)).format('YYYY-MM-DD');
+								}
+							}
+						}));
+
+						res.end();
+					});
+				}
+			});
+			stmt.finalize();
+		}); //end query
+
+	}
+
+});
+
+
 //GET all events from storage
+//currently broken
 server.get('/events', function(req, res) {
 
 	res.set({
@@ -81,7 +148,7 @@ server.get('/events', function(req, res) {
 	});
 });
 
-//GET specific event details
+//GET event details grouped by location
 server.get('/events/locations', function(req, res) {
 	res.set({
 		'Content-Type': 'application/json'
@@ -104,6 +171,49 @@ server.get('/events/locations', function(req, res) {
 		}
 	});
 });
+
+//GET event count by the hour
+//this is pretty inefficient...
+server.get('/events/count', function(req, res) {
+	
+	res.set({
+		'Content-Type': 'application/json'
+	});
+
+	//defines the grouing (i.e. by hour, minute, etc)
+	var timeFormat = 'YYYY-MM-DD HH:00:00';
+
+	db.all("SELECT time, count(*) as count FROM events GROUP BY time", function(err, rows){
+		if(err){
+			res.status(500);
+			res.send({
+				"error": err,
+				"events": []
+			});
+		} 
+		else {
+			var eventsByTime = {};
+			rows.forEach(function(event){
+	 			let eventTime = moment.unix(event.time).format(timeFormat);
+
+	 			if(eventTime in eventsByTime){
+	 				eventsByTime[eventTime] += 1;
+	 			}
+	 			else {
+	 				eventsByTime[eventTime] = 1;
+	 			}
+	 		});
+
+	 		res.status(200);
+			res.send({
+				"error": null,
+				"events": eventsByTime
+			});
+		}
+	});
+});
+
+
 
 //app kick off!
 server.listen(8080);
