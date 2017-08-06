@@ -91,11 +91,6 @@ server.get('/event', function(req, res) {
 						//console.log(rows[1]);
 						res.write(mustache.render(data.toString(), {
 							'events': rows,
-							//'city': rows[0].city,
-							//'country': 
-							'functionName': function() {
-								return console.log('hi');
-							},
 							'functionTime': function(){
 								return function(time, render){
 									return moment.unix(render(time)).format('HH:mm:ss');
@@ -103,8 +98,6 @@ server.get('/event', function(req, res) {
 							},
 							'functionDate': function(){
 								return function(time, render){
-									console.log(render(time));
-									console.log(time);
 									return moment.unix(render(time)).format('YYYY-MM-DD');
 								}
 							}
