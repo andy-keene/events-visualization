@@ -7,7 +7,7 @@ var moment = require('moment');
 var mustache = require('mustache');
 var fs = require('fs');
 //... and inits
-var express = require('express')
+var express = require('express');
 var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
@@ -65,6 +65,7 @@ app.post('/event', function(req, res) {
 				 req.body.remote_latitude, req.body.remote_country_name, req.body.remote_city, 
 				 req.body.username, req.body.password, req.body.description, req.body);
 		stmt.finalize();
+
 	}); //end insert
 
 	io.emit('event', req.body);
@@ -128,29 +129,31 @@ app.get('/event', function(req, res) {
 });
 
 
-//GET all events from storage
-//currently broken
+//returns all events from storage as json list in a file download
+//chunks writes one at time to avoid memory overload
+//note: this shuold just return the database.
 app.get('/events', function(req, res) {
 
+	res.status(200);
 	res.set({
-		'Content-Type': 'application/json'
+		'Content-Type': 'application/json',
+		'Content-Disposition': 'attachment; filename=events.json'
 	});
+	res.write('{"events":[');
+	var firstWrite = true;
 
-	db.all('SELECT * FROM events', function(err, rows){
-		if(err){
-			res.status(500);
-			res.send({
-				"error": err,
-				"events": []
-			});
+	db.each("SELECT * FROM events", function(err, row){
+		//chunk each successful retrival 
+		if(!err){
+			res.write((firstWrite ? "" : ",") + JSON.stringify(row));
+			firstWrite = false;
 		} 
-		else {
-			res.status(200);
-			res.send({
-				"error": null,
-				"events": rows
-			});
-		}
+	}, function(err, numRows){
+		//completion callback, if numRows == 0, the events array will be empty
+		//end of transmission must be in completion call back
+		//{} obj is to avoid invalid JSON - kind of hacky. should probably write differently
+		res.write(']}');
+		res.end();
 	});
 });
 
