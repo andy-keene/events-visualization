@@ -28,7 +28,7 @@
 		<style type="text/css">
 			#chartdiv {
 			  width: 80%;
-			  height: 400px;
+			  height: 750px;
 			  margin: auto;
 			  border-radius: 3px;
 			  border-style: fill;
@@ -38,6 +38,7 @@
 		</style>
 	</head>
 	<body>
+
 		<!--Navbar -->
 	    <nav class="navbar navbar-default">
 	      <div class="container-fluid">
@@ -61,12 +62,44 @@
 	      </div><!-- /.container-fluid -->
 	    </nav><!-- /.Navbar -->
 		
+
 		<div class="container-fluid">
 			
 				<div class="row">
 					<div class="col-md-12">
-						<div id="chartdiv"></div>
-					</div><!-- end animated map --> 
+						<!-- eventMap panel -->
+					 	<div class="panel panel-default">
+	                        <div class="panel-heading">
+	                            <i class="fa fa-bar-chart-o fa-fw"></i> Geodata
+	                            <div class="pull-right">
+	                                <div class="btn-group">
+	                                    <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+	                                        Actions
+	                                        <span class="caret"></span>
+	                                    </button>
+	                                    <ul class="dropdown-menu pull-right" role="menu">
+	                                        <li><a href="#">turn on map export</a>
+	                                        </li>
+	                                        <li><a href="#">turn off map export</a>
+	                                        </li>
+	                                        <li><a href="#">turn off live streaming</a>
+	                                        </li>
+	                                        <li class="divider"></li>
+	                                        <li><a href="#">Separated link</a>
+	                                        </li>
+	                                    </ul>
+	                                </div>
+	                            </div>
+	                        </div>
+
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            <div id="chartdiv"></div>
+                        </div>
+                        <!-- /.panel-body -->
+                    </div>
+                    <!-- /.panel -->
+				</div> <!-- end col -->
 				</div> <!-- end row -->
 				<div class="row">
 					<div class="col-md-8 col-md-offset-2">
@@ -80,11 +113,13 @@
 
 		var planeSVG = `m47.304248,31.588526l-3.694258,-0.099177l0.099855,3.669162c0.099855,5.950039 5.092134,10.809228 11.082868,11.007582l3.694258,0.099177l-0.099855,-3.669162c-0.199806,-5.950039 -5.092229,-10.908405 -11.082868,-11.007582z`;
 
-		var map = AmCharts.makeChart("chartdiv", {
+		var targetSVG = "M9,0C4.029,0,0,4.029,0,9s4.029,9,9,9s9-4.029,9-9S13.971,0,9,0z M9,15.93 c-3.83,0-6.93-3.1-6.93-6.93S5.17,2.07,9,2.07s6.93,3.1,6.93,6.93S12.83,15.93,9,15.93 M12.5,9c0,1.933-1.567,3.5-3.5,3.5S5.5,10.933,5.5,9S7.067,5.5,9,5.5 S12.5,7.067,12.5,9z";
+
+		var eventMap = AmCharts.makeChart("chartdiv", {
 			"type": "map",
 			"theme": "light",
 			"areasSettings": {
-					"unlistedAreasColor": "#8dd9ef"
+				"unlistedAreasColor": "#8dd9ef"
 			},
 			"imagesSettings": {
 				"color": "#585869",
@@ -142,14 +177,14 @@
 			}, // end data provider			
 		});
 
-		//this is the object used to handle incoming events
+		//this is the object used to handle incoming socket events
 		var globalEvents = {
 			queue: [],
-			//flag: false
+			flag: false
 		};
 
 		//socket stuff
-		var socket = io.connect('http://localhost:8080/');	//to be initialzed post render
+		var socket = io.connect('http://localhost:8080/',);	//to be initialzed post render
 		socket.on('event', function(eventData){
 			//eventData should be exactly what is delievered to the server
 			console.log('Socket recieved an event: ' + Object.keys(eventData));
@@ -161,28 +196,34 @@
 			//if not currently drawing, we need to kick it off
 			if(!globalEvents.flag){
 				globalEvents.flag = true;
-				updateMapEvents(map);
+				updateMapEvents(eventMap);
 			}
+		});
+		socket.on('connect_error', function(eventData){
+			alert('failed to connect to live stream');
+			//socket.close();
 		});
 
 
 
 
-		function updateMapEvents(chart){
+		function updateMapEvents(map){
 
 			if(globalEvents.queue.length > 0){
-
 				//update map to draw next event
 				event = globalEvents.queue.pop();
 
-				//set new line
-				var animationLine = chart.getObjectById("animationLine");
-				animationLine.latitudes = [event.host_latitude, event.remote_latitude];
-				animationLine.longitudes = [event.host_longitude, event.remote_longitude];
-				chart.validateData();
+				//adds/updates the images to the map
+				addLocationImages(map, event);
 
-				//animate image
-				var animationImage = chart.getObjectById("animationImage");
+				//set new line for event
+				var animationLine = map.getObjectById("animationLine");
+				animationLine.latitudes = [event.remote_latitude, event.host_latitude];
+				animationLine.longitudes = [event.remote_longitude, event.host_longitude];
+				map.validateData();
+
+				//kick-off animattion of image along line
+				var animationImage = map.getObjectById("animationImage");
 				animationImage.animateAlong("animationLine")
 
 				console.log("calling animate plane...");
@@ -207,45 +248,61 @@
 	          	console.log('updating map');
 
 	            response.events.forEach(function(event){
-	            	
-	            	var key = event.remote_longitude.toString() + event.remote_latitude.toString();
-	            	map.dataProvider.images.push({
-							"id": key,
+	            	addLocationImages(eventMap, event);
+	            });
+	            eventMap.validateData();
+	            updateMapEvents(eventMap);
+			}
+	      }
+	    });
+
+
+	    //Adds images for the given events host and remote locations if they do not exist,
+	    //otherwise updates them
+	    function addLocationImages(map, event){
+	    	//id images by "<longitude><latitude>"
+	    	var remoteKey = event.remote_longitude.toString() + event.remote_latitude.toString();
+	    	var hostKey = event.host_longitude.toString() + event.host_latitude.toString();;
+	        
+	        if(!map.getObjectById(remoteKey)){
+	        	map.dataProvider.images.push({
+							"id": remoteKey,
 							"type": "circle",
 							"color": "#626AD2",
-							"width": event.total_events > 11 ? 11: event.total_events,		//need to max the size somewhere
+							"width": event.total_events > 11 ? 11: event.total_events,		// the || is incase it is null from say a socket event.
 							"fixedSize": true,
 						    "title": event.remote_city,
 							"longitude": event.remote_longitude,
 							"latitude": event.remote_latitude,
 							//description is on click display of indormation
-							"description": generateDescription(event),
+							"description": `<div style="font-size:small;">
+										   <b>Services</b>: ${event.services}<br>
+										   <b>Number of events:</b> ${event.total_events}<br>
+										   See more events originating from this location 
+										   <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
+										   </div>`,
 							"descriptionWindowHeight": 150,
 						  	"descriptionWindowWidth": 200,
 						  	"descriptionWindowBottom": 15,
-						  	"descriptionWindowLeft": 5
-				    	});
-	            });
-	            map.validateData();
-	            updateMapEvents(map);
-
+						  	"descriptionWindowLeft": 10,
+						  	//these are local storage for us. 
+						  	//"events": event.total_events || 1,
+						  	"services": event.services
+				});
+			} else {
+				//this may be taken out, but updates the relevant image information with the new attack info.
+				let remoteLocationImage = map.getObjectById(remoteKey);
+				remoteLocationImage["width"] = event.total_events > 11 ? 11: event.total_events;
+				remoteLocationImage["services"] = event.services;
+				remoteLocationImage["description"] = `<div style="font-size:small;">
+													   <b>Services</b>: ${event.services}<br>
+													   <b>Number of events:</b> ${event.total_events}<br>
+													   See more events originating from this location 
+													   <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
+													   </div>`;
 			}
-	      }
-	    });
-	    
-
-	    //generates given events description
-	    function generateDescription(event){
-	    	return `
-	    		   <div style="font-size:small;">
-				   <b>Service</b>: ${event.service}<br>
-				   <b>Connect events:</b> ${event.connect_events}<br>
-				   <b>Reverse Mapping events:</b> ${event.reverse_mapping_events}<br>
-				   <b>Password events:</b> ${event.password_events}<br>
-				   See more here: <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
-				   </div>
-				 `;
 	    }
+	    
 
 		</script>
 	</body>

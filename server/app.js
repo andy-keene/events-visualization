@@ -54,21 +54,28 @@ app.post('/event', function(req, res) {
 	});
 
 	db.serialize(function() {
-		var stmt = db.prepare(`INSERT INTO events (time, remote_ip, host_ip, remote_port, 
-						       service, type, host_longitude, host_latitude, remote_longitude, 
-						       remote_latitude, remote_country_name, remote_city, username, password, 
-						       description) 
-						       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+		var stmt = db.prepare(`INSERT INTO events (
+							time, remote_ip, host_ip, remote_port,
+							service, type, host_longitude, host_latitude,
+							remote_longitude,remote_latitude, remote_country_name,
+							remote_city, username, password, description)
+							VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		stmt.run(req.body.time, req.body.remote_ip, req.body.host_ip,
 				 req.body.remote_port, req.body.service, req.body.type,
 				 req.body.host_longitude, req.body.host_latitude, req.body.remote_longitude,
 				 req.body.remote_latitude, req.body.remote_country_name, req.body.remote_city, 
-				 req.body.username, req.body.password, req.body.description, req.body);
+				 req.body.username, req.body.password, req.body.description);
 		stmt.finalize();
 
-	}); //end insert
+		db.all(`SELECT host_longitude, host_latitude, remote_longitude, remote_latitude, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events 
+				FROM events WHERE remote_latitude=? AND remote_longitude=? 
+				GROUP BY remote_latitude, remote_longitude`, req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
 
-	io.emit('event', req.body);
+					if(!err && rows.length === 1){
+						io.emit('event', rows[0]);
+					}
+		});
+	}); //end insert / emission
 
 	res.send('ok');
 });
@@ -163,7 +170,7 @@ app.get('/events/locations', function(req, res) {
 		'Content-Type': 'application/json'
 	});
 
-	db.all("SELECT remote_longitude, remote_latitude, service, remote_city, count(case when type='connect' then 1 else null end) as connect_events, count(case when type='password' then 1 else null end) as password_events, count(case when type='reverse mapping' then 1 else null end) as reverse_mapping_events, count(*) as total_events FROM events GROUP BY remote_latitude, remote_longitude", function(err, rows){
+	db.all("SELECT host_longitude, host_latitude, remote_longitude, remote_latitude, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events FROM events GROUP BY remote_latitude, remote_longitude", function(err, rows){
 		if(err){
 			res.status(500);
 			res.send({
