@@ -1,0 +1,95 @@
+<html>
+	<head>
+
+		<!-- headers for maps -->
+		<script src="https://www.amcharts.com/lib/3/ammap.js"></script>
+		<script src="https://www.amcharts.com/lib/3/maps/js/worldLow.js"></script>
+		<script src="https://www.amcharts.com/lib/3/plugins/export/export.min.js"></script>
+		<link rel="stylesheet" href="https://www.amcharts.com/lib/3/plugins/export/export.css" type="text/css" media="all" />
+		<script src="https://www.amcharts.com/lib/3/themes/light.js"></script>
+
+		<!-- jquery -->
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+		<!-- headers for bootstrap -->
+		<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" />
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+		<!-- headers for chart.js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+
+		<!-- local js stuff-->
+		<script src="/config.js"></script> 
+
+		<!-- socket -->
+		<script src="/socket.io/socket.io.js"></script>
+
+
+		<style type="text/css">
+			#chartdiv {
+			  width: 80%;
+			  height: 750px;
+			  margin: auto;
+			  border-radius: 3px;
+			  border-style: fill;
+			  border-width: 2px;
+			  border-color: black;
+			}						
+		</style>
+	</head>
+	<body>
+
+
+
+	<canvas id="timeLineChart" width="400" height="200"></canvas>
+	<script>
+
+	 jQuery.get({
+	      url: '/events/timeLineData',
+	      dataType: "json",
+	      success: function(response, status){
+	          
+	          if(!response.error){
+
+	          	console.log(response);
+	            timeLine.data.labels = response.timeline.labels;
+			    timeLine.data.datasets.forEach((dataset) => {
+			    	//dataset.backgroundColor = 
+			        dataset.data = response.timeline.data;
+			    });
+			   
+			    timeLine.update();
+			}
+	      }
+	    });
+
+
+	var ctx = document.getElementById("timeLineChart").getContext('2d');
+	var timeLine = new Chart(ctx, {
+	    type: 'line',
+	    data: {
+	        datasets: [{
+	            label: '',
+	            backgroundColor: "#FF0000",
+	            xAxisId: "day",
+	            yAxisId: "events",
+	            data: [],
+	            labels: [],
+	            borderWidth: 1
+	        }]
+	    },
+	    options: {}
+	});
+
+	function generateRandomColor(){	
+		return `rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) +15}, ${Math.floor(Math.random()*225)+5})`;
+	}
+</script>
+
+
+	</body>
+</html>
+
+
+
+

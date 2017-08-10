@@ -15,7 +15,13 @@ var io = require('socket.io')(server);
 
 //database init (create if it does not exist)
 var db = new sqlite3.Database('events.db');
-db.run("CREATE TABLE IF NOT EXISTS events (time TEXT, remote_ip TEXT, host_ip TEXT, remote_port TEXT, service TEXT, type TEXT, host_longitude INTEGER, host_latitude INTEGER, remote_longitude INTEGER, remote_latitude INTEGER, remote_country_name TEXT, remote_city TEXT, username TEXT, password TEXT, description TEXT)");
+db.run(`CREATE TABLE IF NOT EXISTS events (
+        time TEXT, remote_ip TEXT, host_ip TEXT,
+        remote_port TEXT, service TEXT, type TEXT,
+        host_longitude INTEGER, host_latitude INTEGER,
+        remote_longitude INTEGER, remote_latitude INTEGER,
+        remote_country_name TEXT, remote_city TEXT,
+        username TEXT, password TEXT, description TEXT)`);
 
 
 
@@ -54,12 +60,12 @@ app.post('/event', function(req, res) {
 	});
 
 	db.serialize(function() {
-		var stmt = db.prepare(`INSERT INTO events (
-							time, remote_ip, host_ip, remote_port,
-							service, type, host_longitude, host_latitude,
-							remote_longitude,remote_latitude, remote_country_name,
-							remote_city, username, password, description)
-							VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+        var stmt = db.prepare(`INSERT INTO events (
+                               time, remote_ip, host_ip, remote_port,
+                               service, type, host_longitude, host_latitude,
+                               remote_longitude,remote_latitude, remote_country_name,
+                               remote_city, username, password, description)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 		stmt.run(req.body.time, req.body.remote_ip, req.body.host_ip,
 				 req.body.remote_port, req.body.service, req.body.type,
 				 req.body.host_longitude, req.body.host_latitude, req.body.remote_longitude,
@@ -67,12 +73,16 @@ app.post('/event', function(req, res) {
 				 req.body.username, req.body.password, req.body.description);
 		stmt.finalize();
 
-		db.all(`SELECT host_longitude, host_latitude, remote_longitude, remote_latitude, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events 
-				FROM events WHERE remote_latitude=? AND remote_longitude=? 
-				GROUP BY remote_latitude, remote_longitude`, req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
+        db.all(`SELECT 
+                host_longitude, host_latitude, remote_longitude, remote_latitude,
+                GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events 
+                FROM events
+                WHERE remote_latitude=? AND remote_longitude=? 
+                GROUP BY remote_latitude, remote_longitude`, req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
 
 					if(!err && rows.length === 1){
-						io.emit('event', rows[0]);
+                        rows[0].service = req.body.service;
+					    io.emit('event', rows[0]);
 					}
 		});
 	}); //end insert / emission
@@ -93,7 +103,7 @@ app.get('/event', function(req, res) {
 	else {
 	
 		db.serialize(function() {
-			var stmt = db.prepare("SELECT * from events WHERE remote_longitude=? AND remote_latitude=?");
+			var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=?`);
 			stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
 				if(err){
 					res.status(500);
@@ -149,7 +159,7 @@ app.get('/events', function(req, res) {
 	res.write('{"events":[');
 	var firstWrite = true;
 
-	db.each("SELECT * FROM events", function(err, row){
+	db.each(`SELECT * FROM events`, function(err, row){
 		//chunk each successful retrival 
 		if(!err){
 			res.write((firstWrite ? "" : ",") + JSON.stringify(row));
@@ -170,7 +180,11 @@ app.get('/events/locations', function(req, res) {
 		'Content-Type': 'application/json'
 	});
 
-	db.all("SELECT host_longitude, host_latitude, remote_longitude, remote_latitude, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events FROM events GROUP BY remote_latitude, remote_longitude", function(err, rows){
+    db.all(`SELECT 
+            host_longitude, host_latitude, remote_longitude, remote_latitude, 
+            service, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events
+            FROM events
+            GROUP BY remote_latitude, remote_longitude`, function(err, rows){
 		if(err){
 			res.status(500);
 			res.send({
@@ -190,7 +204,8 @@ app.get('/events/locations', function(req, res) {
 
 //GET event count by the hour
 //this is pretty inefficient...
-app.get('/events/count', function(req, res) {
+//also, nothing can actually have the same timestamp, so there's really no need to group
+app.get('/events/timeLineData', function(req, res) {
 	
 	res.set({
 		'Content-Type': 'application/json'
@@ -199,7 +214,9 @@ app.get('/events/count', function(req, res) {
 	//defines the grouing (i.e. by hour, minute, etc)
 	var timeFormat = 'YYYY-MM-DD HH:00:00';
 
-	db.all("SELECT time, count(*) as count FROM events GROUP BY time", function(err, rows){
+    db.all(`SELECT time, service FROM events
+            GROUP BY service
+            SORT BY time ASC`, (err, rows)=>{
 		if(err){
 			res.status(500);
 			res.send({
@@ -208,25 +225,88 @@ app.get('/events/count', function(req, res) {
 			});
 		} 
 		else {
-			var eventsByTime = {};
+			var eventsTimeline = {};
 			rows.forEach(function(event){
+                
+                //each row represents the services timelines
 	 			let eventTime = moment.unix(event.time).format(timeFormat);
 
-	 			if(eventTime in eventsByTime){
-	 				eventsByTime[eventTime] += 1;
+	 			if( eventTime in eventsTimeline){
+	 				eventsTimeline[eventTime] += 1;
 	 			}
 	 			else {
-	 				eventsByTime[eventTime] = 1;
+	 				eventsTimeline[eventTime] = 1;
 	 			}
 	 		});
+
+			var times = [];
+			var counts = [];
+	 		for(var key in eventsTimeline){
+	 			times.push(key);
+	 			counts.push(eventsTimeline[key]);
+	 		}
 
 	 		res.status(200);
 			res.send({
 				"error": null,
-				"events": eventsByTime
+				"timeline": {
+					"labels": times,
+					"data": counts
+				}
 			});
 		}
 	});
+});
+
+//GET event count by the hour
+//this is pretty inefficient...
+app.get('/events/chartData', function(req, res) {
+	
+	res.set({
+		'Content-Type': 'application/json'
+	});
+
+	//defines the grouing (i.e. by hour, minute, etc)
+	var chartData = {
+		"password" : {
+			"labels": [],
+			"data": [],
+			"backgroundColor": []
+		},
+		"username": {
+			"labels": [],
+			"data": [],
+			"backgroundColor": []
+		}
+	};
+
+	db.serialize(function() {
+    db.all(`SELECT username, count(*) as count FROM events 
+            WHERE username IS NOT NULL GROUP BY username 
+            ORDER BY count DESC LIMIT 25`, function(err, rows){
+					if(!err){
+						rows.forEach(function(row){
+							chartData.username.labels.push(row.username);
+							chartData.username.data.push(row.count);
+							chartData.username.backgroundColor.push(`rgba(${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127)+127}, 0.2)`);
+						});
+					}
+		});
+        db.all(`SELECT password, count(*) as count FROM events
+                WHERE password IS NOT NULL GROUP BY password
+                ORDER BY count DESC LIMIT 25`, function(err, rows){
+					if(!err){
+						rows.forEach(function(row){
+							chartData.password.labels.push(row.password);
+							chartData.password.data.push(row.count);
+							chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
+						});
+						console.log(chartData);
+						res.send(chartData);
+					}
+		});
+	}); //end insert / emission
+
 });
 
 

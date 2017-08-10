@@ -111,6 +111,13 @@
 
 		<script type="text/javascript">
 
+		var config = {
+			"serviceColors": {
+				"telnet": "#2E696A",
+				"ssh": "#626AD2"
+			}
+		};
+
 		var planeSVG = `m47.304248,31.588526l-3.694258,-0.099177l0.099855,3.669162c0.099855,5.950039 5.092134,10.809228 11.082868,11.007582l3.694258,0.099177l-0.099855,-3.669162c-0.199806,-5.950039 -5.092229,-10.908405 -11.082868,-11.007582z`;
 
 		var targetSVG = "M9,0C4.029,0,0,4.029,0,9s4.029,9,9,9s9-4.029,9-9S13.971,0,9,0z M9,15.93 c-3.83,0-6.93-3.1-6.93-6.93S5.17,2.07,9,2.07s6.93,3.1,6.93,6.93S12.83,15.93,9,15.93 M12.5,9c0,1.933-1.567,3.5-3.5,3.5S5.5,10.933,5.5,9S7.067,5.5,9,5.5 S12.5,7.067,12.5,9z";
@@ -268,8 +275,8 @@
 	        	map.dataProvider.images.push({
 							"id": remoteKey,
 							"type": "circle",
-							"color": "#626AD2",
-							"width": event.total_events > 11 ? 11: event.total_events,		// the || is incase it is null from say a socket event.
+							"color": config.serviceColors[event.service],
+							"width": event.total_events > 15 ? 15: event.total_events,		// the || is incase it is null from say a socket event.
 							"fixedSize": true,
 						    "title": event.remote_city,
 							"longitude": event.remote_longitude,
@@ -292,6 +299,7 @@
 			} else {
 				//this may be taken out, but updates the relevant image information with the new attack info.
 				let remoteLocationImage = map.getObjectById(remoteKey);
+				remoteLocationImage["color"] = config.serviceColors[event.service];
 				remoteLocationImage["width"] = event.total_events > 11 ? 11: event.total_events;
 				remoteLocationImage["services"] = event.services;
 				remoteLocationImage["description"] = `<div style="font-size:small;">

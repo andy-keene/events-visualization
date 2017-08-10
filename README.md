@@ -22,6 +22,9 @@ General todo:
 		- use pre tags in logs to prevent XSS
 		- need host information in geolocation! Ugh...
 
+If time allows:
+		- update timeline to hndle timelines for all events
+
 
 Lessons learned:
 		- naming conventions across languages. Naming the post data in python kind of killed the cohesive style for js
