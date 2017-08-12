@@ -34,44 +34,44 @@ app.use('/', express.static(__dirname + '/static/'));
 
 // socket stuff
 io.on('connection', function(clientSocket){
-	console.log('connection');
-	//do nothing
+    console.log('connection');
+    //do nothing
 });
 
 
 //basic root
 app.get('/', function(req, res) {
-	io.emit('event', {'hey' : 'there'})
-	res.status(200);
-	res.set({
-		'Content-type': 'text/plain'
-	});
+    io.emit('event', {'hey' : 'there'})
+    res.status(200);
+    res.set({
+        'Content-type': 'text/plain'
+    });
 
-	res.send('welcome to the events app');
+    res.send('welcome to the events app');
 });
 
 //POST event for storage
 //this could use some work on error checking
 app.post('/event', function(req, res) {
 
-	res.status(200);
-	res.set({
-		'Content-Type': 'text/plain'
-	});
+    res.status(200);
+    res.set({
+        'Content-Type': 'text/plain'
+    });
 
-	db.serialize(function() {
+    db.serialize(function() {
         var stmt = db.prepare(`INSERT INTO events (
                                time, remote_ip, host_ip, remote_port,
                                service, type, host_longitude, host_latitude,
                                remote_longitude,remote_latitude, remote_country_name,
                                remote_city, username, password, description)
                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-		stmt.run(req.body.time, req.body.remote_ip, req.body.host_ip,
-				 req.body.remote_port, req.body.service, req.body.type,
-				 req.body.host_longitude, req.body.host_latitude, req.body.remote_longitude,
-				 req.body.remote_latitude, req.body.remote_country_name, req.body.remote_city, 
-				 req.body.username, req.body.password, req.body.description);
-		stmt.finalize();
+        stmt.run(req.body.time, req.body.remote_ip, req.body.host_ip,
+                 req.body.remote_port, req.body.service, req.body.type,
+                 req.body.host_longitude, req.body.host_latitude, req.body.remote_longitude,
+                 req.body.remote_latitude, req.body.remote_country_name, req.body.remote_city, 
+                 req.body.username, req.body.password, req.body.description);
+        stmt.finalize();
 
         db.all(`SELECT 
                 host_longitude, host_latitude, remote_longitude, remote_latitude,
@@ -80,68 +80,67 @@ app.post('/event', function(req, res) {
                 WHERE remote_latitude=? AND remote_longitude=? 
                 GROUP BY remote_latitude, remote_longitude`, req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
 
-					if(!err && rows.length === 1){
+                    if(!err && rows.length === 1){
                         rows[0].service = req.body.service;
-					    io.emit('event', rows[0]);
-					}
-		});
-	}); //end insert / emission
+                        io.emit('event', rows[0]);
+                    }
+        });
+    }); //end insert / emission
 
-	res.send('ok');
+    res.send('ok');
 });
 
 //POST event for storage
 app.get('/event', function(req, res) {
 
-	if(!req.query.longitude || !req.query.latitude){
-		res.status(400);
-		res.set({
-			'Content-Type': 'text/plain'
-		});
-		res.send('bad query!');
-	}
-	else {
-	
-		db.serialize(function() {
-			var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=?`);
-			stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
-				if(err){
-					res.status(500);
-					res.set({
-						'Content-Type': 'application/text'
-					});
-					res.send('something went wrong');
-				}
-				else {
-					res.status(200);
-					res.set({
-						'Content-Type': 'text/html'
-					});
-					fs.readFile('./static/eventTable.html', function(err, data) {
+    if(!req.query.longitude || !req.query.latitude){
+        res.status(400);
+        res.set({
+            'Content-Type': 'text/plain'
+        });
+        res.send('bad query!');
+    }
+    else {
+    
+        db.serialize(function() {
+            var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=?`);
+            stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
+                if(err){
+                    res.status(500);
+                    res.set({
+                        'Content-Type': 'application/text'
+                    });
+                    res.send('something went wrong');
+                }
+                else {
+                    res.status(200);
+                    res.set({
+                        'Content-Type': 'text/html'
+                    });
+                    fs.readFile('./static/eventTable.html', function(err, data) {
 
-						//console.log(rows[1]);
-						res.write(mustache.render(data.toString(), {
-							'events': rows,
-							'functionTime': function(){
-								return function(time, render){
-									return moment.unix(render(time)).format('HH:mm:ss');
-								}
-							},
-							'functionDate': function(){
-								return function(time, render){
-									return moment.unix(render(time)).format('YYYY-MM-DD');
-								}
-							}
-						}));
+                        //console.log(rows[1]);
+                        res.write(mustache.render(data.toString(), {
+                            'events': rows,
+                            'functionTime': function(){
+                                return function(time, render){
+                                    return moment.unix(render(time)).format('HH:mm:ss');
+                                }
+                            },
+                            'functionDate': function(){
+                                return function(time, render){
+                                    return moment.unix(render(time)).format('YYYY-MM-DD');
+                                }
+                            }
+                        }));
+                        res.end();
+                    });
+                }
+            });
+            stmt.finalize();
+        }); //end query
 
-						res.end();
-					});
-				}
-			});
-			stmt.finalize();
-		}); //end query
-
-	}
+    }
 
 });
 
@@ -151,161 +150,199 @@ app.get('/event', function(req, res) {
 //note: this shuold just return the database.
 app.get('/events', function(req, res) {
 
-	res.status(200);
-	res.set({
-		'Content-Type': 'application/json',
-		'Content-Disposition': 'attachment; filename=events.json'
-	});
-	res.write('{"events":[');
-	var firstWrite = true;
+    res.status(200);
+    res.set({
+        'Content-Type': 'application/json',
+        'Content-Disposition': 'attachment; filename=events.json'
+    });
+    res.write('{"events":[');
+    var firstWrite = true;
 
-	db.each(`SELECT * FROM events`, function(err, row){
-		//chunk each successful retrival 
-		if(!err){
-			res.write((firstWrite ? "" : ",") + JSON.stringify(row));
-			firstWrite = false;
-		} 
-	}, function(err, numRows){
-		//completion callback, if numRows == 0, the events array will be empty
-		//end of transmission must be in completion call back
-		//{} obj is to avoid invalid JSON - kind of hacky. should probably write differently
-		res.write(']}');
-		res.end();
-	});
+    db.each(`SELECT * FROM events`, function(err, row){
+        //chunk each successful retrival 
+        if(!err){
+            res.write((firstWrite ? "" : ",") + JSON.stringify(row));
+            firstWrite = false;
+        } 
+    }, function(err, numRows){
+        //completion callback, if numRows == 0, the events array will be empty
+        //end of transmission must be in completion call back
+        //{} obj is to avoid invalid JSON - kind of hacky. should probably write differently
+        res.write(']}');
+        res.end();
+    });
 });
 
 //GET event details grouped by location
 app.get('/events/locations', function(req, res) {
-	res.set({
-		'Content-Type': 'application/json'
-	});
+    res.set({
+        'Content-Type': 'application/json'
+    });
 
     db.all(`SELECT 
             host_longitude, host_latitude, remote_longitude, remote_latitude, 
             service, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events
             FROM events
             GROUP BY remote_latitude, remote_longitude`, function(err, rows){
-		if(err){
-			res.status(500);
-			res.send({
-				"error": err,
-				"events": []
-			});
-		} 
-		else {
-			res.status(200);
-			res.send({
-				"error": null,
-				"events": rows
-			});
-		}
-	});
+        if(err){
+            res.status(500);
+            res.send({
+                "error": err,
+                "events": []
+            });
+        } 
+        else {
+            res.status(200);
+            res.send({
+                "error": null,
+                "events": rows
+            });
+        }
+    });
 });
 
 //GET event count by the hour
 //this is pretty inefficient...
 //also, nothing can actually have the same timestamp, so there's really no need to group
 app.get('/events/timeLineData', function(req, res) {
-	
-	res.set({
-		'Content-Type': 'application/json'
-	});
+    
+    res.set({
+        'Content-Type': 'application/json'
+    });
 
-	//defines the grouing (i.e. by hour, minute, etc)
-	var timeFormat = 'YYYY-MM-DD HH:00:00';
+    //defines the grouing (i.e. by hour, minute, etc)
+    var timeFormat = 'YYYY-MM-DD HH:00:00';
 
     db.all(`SELECT time, service FROM events
-            GROUP BY service
-            SORT BY time ASC`, (err, rows)=>{
-		if(err){
-			res.status(500);
-			res.send({
-				"error": err,
-				"events": []
-			});
-		} 
-		else {
-			var eventsTimeline = {};
-			rows.forEach(function(event){
+            ORDER BY time`, (err, rows)=>{
+        if(err){
+            res.status(500);
+            res.send({
+                "error": err,
+                "events": []
+            });
+        } 
+        else {
+            var eventsTimeline = {};
+
+            rows.forEach(function(event){
                 
                 //each row represents the services timelines
-	 			let eventTime = moment.unix(event.time).format(timeFormat);
+                let eventTime = moment.unix(event.time).format(timeFormat);
 
-	 			if( eventTime in eventsTimeline){
-	 				eventsTimeline[eventTime] += 1;
-	 			}
-	 			else {
-	 				eventsTimeline[eventTime] = 1;
-	 			}
-	 		});
+                if( eventTime in eventsTimeline){
+                    eventsTimeline[eventTime] += 1;
+                }
+                else {
+                    eventsTimeline[eventTime] = 1;
+                }
+            });
 
-			var times = [];
-			var counts = [];
-	 		for(var key in eventsTimeline){
-	 			times.push(key);
-	 			counts.push(eventsTimeline[key]);
-	 		}
-
-	 		res.status(200);
-			res.send({
-				"error": null,
-				"timeline": {
-					"labels": times,
-					"data": counts
-				}
-			});
-		}
-	});
+            var times = [];
+            var counts = [];
+            for(var key in eventsTimeline){
+                times.push(key);
+                counts.push(eventsTimeline[key]);
+            }
+        
+            res.status(200);
+            res.send({
+                "error": null,
+                "timeLines": {
+                    "ssh" : {
+                        "labels": times,
+                        "data": counts
+                    }
+                }
+            });
+        }
+    });
 });
+
+/*
+                times = {};
+                row.times.split(',').forEach((time)=>{
+
+                    let eventTime = moment.unix(time).format(timeFormat);
+
+                    if(eventTime in times){
+                        times[eventTime] += 1;
+                    }
+                    else {
+                        times[eventTime] = 1;
+                    }
+
+                    timeLines[row.service] = {
+                        "labels": [],
+                        "data": []
+                    };
+
+                    for(var timeData in times){
+                        timeLines[row.service].labels.push(timeData);
+                        timeLines[row.service].data.push(times[timeData]);
+                    }
+                    
+                        timeLines = {
+                            "ssh": {
+                                "labels": ["march 5th, 12:00", ...],
+                                "data": [1201, ...]
+                            },
+                            .
+                            .
+                            .
+                        }
+                    
+*/
+
 
 //GET event count by the hour
 //this is pretty inefficient...
 app.get('/events/chartData', function(req, res) {
-	
-	res.set({
-		'Content-Type': 'application/json'
-	});
+    
+    res.set({
+        'Content-Type': 'application/json'
+    });
 
-	//defines the grouing (i.e. by hour, minute, etc)
-	var chartData = {
-		"password" : {
-			"labels": [],
-			"data": [],
-			"backgroundColor": []
-		},
-		"username": {
-			"labels": [],
-			"data": [],
-			"backgroundColor": []
-		}
-	};
+    //defines the grouing (i.e. by hour, minute, etc)
+    var chartData = {
+        "password" : {
+            "labels": [],
+            "data": [],
+            "backgroundColor": []
+        },
+        "username": {
+            "labels": [],
+            "data": [],
+            "backgroundColor": []
+        }
+    };
 
-	db.serialize(function() {
+    db.serialize(function() {
     db.all(`SELECT username, count(*) as count FROM events 
             WHERE username IS NOT NULL GROUP BY username 
             ORDER BY count DESC LIMIT 25`, function(err, rows){
-					if(!err){
-						rows.forEach(function(row){
-							chartData.username.labels.push(row.username);
-							chartData.username.data.push(row.count);
-							chartData.username.backgroundColor.push(`rgba(${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127)+127}, 0.2)`);
-						});
-					}
-		});
+                    if(!err){
+                        rows.forEach(function(row){
+                            chartData.username.labels.push(row.username);
+                            chartData.username.data.push(row.count);
+                            chartData.username.backgroundColor.push(`rgba(${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127)+127}, 0.2)`);
+                        });
+                    }
+        });
         db.all(`SELECT password, count(*) as count FROM events
                 WHERE password IS NOT NULL GROUP BY password
                 ORDER BY count DESC LIMIT 25`, function(err, rows){
-					if(!err){
-						rows.forEach(function(row){
-							chartData.password.labels.push(row.password);
-							chartData.password.data.push(row.count);
-							chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
-						});
-						console.log(chartData);
-						res.send(chartData);
-					}
-		});
-	}); //end insert / emission
+                    if(!err){
+                        rows.forEach(function(row){
+                            chartData.password.labels.push(row.password);
+                            chartData.password.data.push(row.count);
+                            chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
+                        });
+                        console.log(chartData);
+                        res.send(chartData);
+                    }
+        });
+    }); //end insert / emission
 
 });
 
