@@ -119,15 +119,35 @@ app.get('/event', function(req, res) {
                     fs.readFile('./static/eventTable.html', function(err, data) {
 
                         res.write(mustache.render(data.toString(), {
-                            'events': rows,
-                            'functionTime': function(){
+                            events: rows,
+                            functionTime: function(){
                                 return function(time, render){
                                     return moment.unix(render(time)).format('HH:mm:ss');
                                 }
                             },
-                            'functionDate': function(){
+                            functionDate: function(){
                                 return function(time, render){
                                     return moment.unix(render(time)).format('YYYY-MM-DD');
+                                }
+                            },
+                            functionLocation: function(){
+                                return function(eventLocation, render){
+                                    let location = render(eventLocation);
+                                    let city = location.split(',')[0];
+                                    let country = location.split(',')[1];
+
+                                    if(!city && !country){
+                                        return 'Unknown Location';
+                                    }
+                                    else if(!city){
+                                        return 'Unknown City, ' + country;
+                                    }
+                                    else if(!country){
+                                        return city + ', Unknown Country';
+                                    }
+                                    else {
+                                        return city + ', ' + country;
+                                    }
                                 }
                             }
                         }));
