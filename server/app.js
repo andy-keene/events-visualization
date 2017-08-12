@@ -78,15 +78,15 @@ app.post('/event', function(req, res) {
                 GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events 
                 FROM events
                 WHERE remote_latitude=? AND remote_longitude=? 
-                GROUP BY remote_latitude, remote_longitude`, req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
-
-                    if(!err && rows.length === 1){
-                        rows[0].service = req.body.service;
-                        io.emit('event', rows[0]);
-                    }
+                GROUP BY remote_latitude, remote_longitude`,
+                req.body.remote_latitude, req.body.remote_longitude, function(err, rows){
+            
+            if(!err && rows.length === 1){
+                rows[0].service = req.body.service;
+                io.emit('event', rows[0]);
+            }
         });
     }); //end insert / emission
-
     res.send('ok');
 });
 
@@ -101,7 +101,6 @@ app.get('/event', function(req, res) {
         res.send('bad query!');
     }
     else {
-    
         db.serialize(function() {
             var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=?`);
             stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
@@ -119,7 +118,6 @@ app.get('/event', function(req, res) {
                     });
                     fs.readFile('./static/eventTable.html', function(err, data) {
 
-                        //console.log(rows[1]);
                         res.write(mustache.render(data.toString(), {
                             'events': rows,
                             'functionTime': function(){
@@ -138,16 +136,13 @@ app.get('/event', function(req, res) {
                 }
             });
             stmt.finalize();
-        }); //end query
-
+        }); //end serialization
     }
-
 });
-
 
 //returns all events from storage as json list in a file download
 //chunks writes one at time to avoid memory overload
-//note: this shuold just return the database.
+//note: this shuold just return the database, or a filter of todays events
 app.get('/events', function(req, res) {
 
     res.status(200);
@@ -157,28 +152,26 @@ app.get('/events', function(req, res) {
     });
     res.write('{"events":[');
     var firstWrite = true;
-
     db.each(`SELECT * FROM events`, function(err, row){
-        //chunk each successful retrival 
+        //row callback - chunk each successful retrival 
         if(!err){
             res.write((firstWrite ? "" : ",") + JSON.stringify(row));
             firstWrite = false;
         } 
     }, function(err, numRows){
-        //completion callback, if numRows == 0, the events array will be empty
-        //end of transmission must be in completion call back
-        //{} obj is to avoid invalid JSON - kind of hacky. should probably write differently
+        //completion callback - if numRows == 0, the events array will be empty
+        //end of transmission
         res.write(']}');
         res.end();
     });
 });
 
 //GET event details grouped by location
-app.get('/events/locations', function(req, res) {
+app.get('/events/locationData', function(req, res) {
+
     res.set({
         'Content-Type': 'application/json'
     });
-
     db.all(`SELECT 
             host_longitude, host_latitude, remote_longitude, remote_latitude, 
             service, GROUP_CONCAT(DISTINCT service) as services, remote_city, count(*) as total_events
@@ -203,7 +196,6 @@ app.get('/events/locations', function(req, res) {
 
 //GET event count by the hour
 //this is pretty inefficient...
-//also, nothing can actually have the same timestamp, so there's really no need to group
 app.get('/events/timeLineData', function(req, res) {
     
     res.set({
@@ -225,8 +217,7 @@ app.get('/events/timeLineData', function(req, res) {
         else {
             var eventsTimeline = {};
 
-            rows.forEach(function(event){
-                
+            rows.forEach(function(event){                
                 //each row represents the services timelines
                 let eventTime = moment.unix(event.time).format(timeFormat);
 
@@ -237,7 +228,6 @@ app.get('/events/timeLineData', function(req, res) {
                     eventsTimeline[eventTime] = 1;
                 }
             });
-
             var times = [];
             var counts = [];
             for(var key in eventsTimeline){
@@ -259,7 +249,7 @@ app.get('/events/timeLineData', function(req, res) {
     });
 });
 
-/*
+/*              //Alternative method for returning service based timelines
                 times = {};
                 row.times.split(',').forEach((time)=>{
 
@@ -302,7 +292,6 @@ app.get('/events/chartData', function(req, res) {
     res.set({
         'Content-Type': 'application/json'
     });
-
     //defines the grouing (i.e. by hour, minute, etc)
     var chartData = {
         "password" : {
@@ -318,9 +307,9 @@ app.get('/events/chartData', function(req, res) {
     };
 
     db.serialize(function() {
-    db.all(`SELECT username, count(*) as count FROM events 
-            WHERE username IS NOT NULL GROUP BY username 
-            ORDER BY count DESC LIMIT 25`, function(err, rows){
+        db.all(`SELECT username, count(*) as count FROM events 
+                WHERE username IS NOT NULL GROUP BY username 
+                ORDER BY count DESC LIMIT 25`,function(err, rows){
                     if(!err){
                         rows.forEach(function(row){
                             chartData.username.labels.push(row.username);
@@ -338,14 +327,12 @@ app.get('/events/chartData', function(req, res) {
                             chartData.password.data.push(row.count);
                             chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
                         });
-                        console.log(chartData);
+                        //does serialize garuntee this callback completes *after* the previous?
                         res.send(chartData);
                     }
         });
-    }); //end insert / emission
-
+    }); //end serialize
 });
-
 
 
 //app kick off!
