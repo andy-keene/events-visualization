@@ -46,12 +46,24 @@
         <!-- Custom Theme JavaScript -->
         <script src="/dist/js/sb-admin-2.js"></script>
 
+        <!-- spinner -->
+        <script src="/spin.js"></script>
+
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
             <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
             <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
         <![endif]-->
+
+        <style type="text/css">
+            #loader {
+                width: 100%;
+                height: 350px;
+                vertical-align: middle;
+                text-align: center;
+            }          
+        </style>
 
     </head>
     <body>
@@ -82,7 +94,7 @@
         <div class="container">
             <div class="row" id="loader-row">
                 <div class="col-lg-12">
-                    <div id="loader"> Loading...</div>
+                    <div id="loader" style="height:300px; text-align: center;"></div>
                 </div> <!-- end loader row -->
             </div>
 			<div class="row" id="table-row" style="visibility: hidden;">
@@ -90,7 +102,7 @@
 
                     <div class="panel panel-default"">
                         <div class="panel-heading">
-                            Logs for {{events.1.remote_city}}, {{events.0.remote_country_name}}
+                            Logs for: {{#functionLocation}}{{events.1.remote_city}},{{events.0.remote_country_name}}{{/functionLocation}}
                         </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">
@@ -137,13 +149,14 @@
 					</div><!--col -->
 				</div> <!-- row -->
 		</div><!-- container-->
-
         
-        <!-- Page-Level Demo Scripts - Tables - Use for reference -->
         <script>
+
+        var spinner = new Spinner().spin();
+        $('#loader').append(spinner.el);
+
         $(document).ready(function() {
             $('#eventTable').DataTable({
-
                 //on render, remove the loader icon and display the table
                 "initComplete": function(settings, json) {
                     $('#loader-row').remove();

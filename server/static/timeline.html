@@ -42,48 +42,72 @@
 
 
 	<canvas id="timeLineChart" width="400" height="200"></canvas>
+	
+	<script src="config.js"></script>
 	<script>
 
-	 jQuery.get({
-	      url: '/events/timeLineData',
-	      dataType: "json",
-	      success: function(response, status){
-	          
-	          if(!response.error){
-
-	          	console.log(response);
-	            timeLine.data.labels = response.timeline.labels;
-			    timeLine.data.datasets.forEach((dataset) => {
-			    	//dataset.backgroundColor = 
-			        dataset.data = response.timeline.data;
-			    });
-			   
-			    timeLine.update();
-			}
-	      }
-	    });
+	 //populate timeline data
+        jQuery.get({
+          url: '/events/timeLineData',
+          dataType: "json",
+          success: function(response, status){
+              
+              if(!response.error){
+                console.log(response);
+                for(service in response["timeLines"]){
+                    console.log(service)
+                    timeLine.data.labels = response["timeLines"][service].labels;
+                    timeLine.data.datasets.push({
+                        label: service,
+                        backgroundColor: config.serviceColors[service],
+                        borderColor: config.serviceColors[service],
+                        data: response["timeLines"][service].data,
+                        labels: response["timeLines"][service].labels,
+                        borderWidth: 1,
+                        fill: true
+                    });
+                }
+                timeLine.update();
+            }
+          }
+        });
 
 
 	var ctx = document.getElementById("timeLineChart").getContext('2d');
 	var timeLine = new Chart(ctx, {
 	    type: 'line',
 	    data: {
-	        datasets: [{
-	            label: '',
-	            backgroundColor: "#FF0000",
-	            xAxisId: "day",
-	            yAxisId: "events",
-	            data: [],
-	            labels: [],
-	            borderWidth: 1
-	        }]
+	        datasets: []
 	    },
-	    options: {}
+	    options: {
+                responsive: true,
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Datetime'
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Events'
+                        }
+                    }]
+                }
+        }
 	});
 
-	function generateRandomColor(){	
-		return `rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) +15}, ${Math.floor(Math.random()*225)+5})`;
-	}
 </script>
 
 
