@@ -162,7 +162,7 @@ app.get('/event', function(req, res) {
 
 //returns all events from storage as json list in a file download
 //chunks writes one at time to avoid memory overload
-//note: this shuold just return the database, or a filter of todays events
+//note: this shuold just return the database, or a filter of todays events (maybe remove?)
 app.get('/events', function(req, res) {
 
     res.status(200);
@@ -183,6 +183,35 @@ app.get('/events', function(req, res) {
         //end of transmission
         res.write(']}');
         res.end();
+    });
+});
+
+//returns list of events which occured during the last three days
+app.get('/recentEvents', function(req, res) {
+
+    res.status(200);
+    res.set({
+        'Content-Type': 'application/json',
+        'Content-Disposition': 'attachment; filename=events.json'
+    });
+
+    var yesterday = moment().utc().add(-3, 'days').valueOf() / 1000;
+    var stmt = db.prepare(`SELECT * FROM events WHERE time > ?`);
+    stmt.all(yesterday, (err, rows)=>{
+        if(err){
+            res.status(500);
+            res.send({
+                "error": err,
+                "events": []
+            });
+        }
+        else {
+            res.status(200);
+            res.send({
+                "error": null,
+                "events": rows
+            });
+        }
     });
 });
 
