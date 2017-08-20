@@ -90,7 +90,7 @@ app.post('/event', function(req, res) {
     res.send('ok');
 });
 
-//POST event for storage
+//get most recent events for a given longitude and latitude
 app.get('/event', function(req, res) {
 
     if(!req.query.longitude || !req.query.latitude){
@@ -215,7 +215,7 @@ app.get('/recentEvents', function(req, res) {
     });
 });
 
-//GET event details grouped by location
+//GET event details for given query location, <longitude> and <latitude>
 app.get('/events/locationData', function(req, res) {
 
     res.set({
@@ -341,41 +341,65 @@ app.get('/events/chartData', function(req, res) {
     res.set({
         'Content-Type': 'application/json'
     });
+    var colors = [
+        "#E15554",
+        "#437ABA",
+        "#2E294E",
+        "#1B998B",
+        "#C5D86D",
+        "#F28F3B",
+        "#254441",
+        "#588B8B",
+        "#3FA7AA",
+        "#E08DAC",
+      //  "#F1EDEE",
+      //  "#545E75",
+    ];
     //defines the grouing (i.e. by hour, minute, etc)
     var chartData = {
-        "password" : {
+        "passwordData" : {
             "labels": [],
             "data": [],
-            "backgroundColor": []
+            "backgroundColor": colors
         },
-        "username": {
+        "usernameData": {
             "labels": [],
             "data": [],
-            "backgroundColor": []
-        }
+            "backgroundColor": colors
+        },
+        "tableRows" : []
     };
 
     db.serialize(function() {
-        db.all(`SELECT username, count(*) as count FROM events 
-                WHERE username IS NOT NULL GROUP BY username 
-                ORDER BY count DESC LIMIT 25`,function(err, rows){
+        db.all(`SELECT username, password, count(*) as count FROM events 
+                WHERE username IS NOT NULL GROUP BY username
+                ORDER BY count DESC LIMIT 10`,function(err, rows){
                     if(!err){
                         rows.forEach(function(row){
-                            chartData.username.labels.push(row.username);
-                            chartData.username.data.push(row.count);
-                            chartData.username.backgroundColor.push(`rgba(${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127)+127}, 0.2)`);
+                            chartData.usernameData.labels.push(row.username);
+                            chartData.usernameData.data.push(row.count);
+                            //chartData.username.backgroundColor.push(`rgba(${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127) + 127}, ${Math.floor(Math.random()*127)+127}, 0.2)`);
                         });
                     }
         });
         db.all(`SELECT password, count(*) as count FROM events
                 WHERE password IS NOT NULL GROUP BY password
-                ORDER BY count DESC LIMIT 25`, function(err, rows){
+                ORDER BY count DESC LIMIT 10`, function(err, rows){
                     if(!err){
                         rows.forEach(function(row){
-                            chartData.password.labels.push(row.password);
-                            chartData.password.data.push(row.count);
-                            chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
+                            chartData.passwordData.labels.push(row.password);
+                            chartData.passwordData.data.push(row.count);
+                            //chartData.password.backgroundColor.push(`rgb(${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*230) + 15}, ${Math.floor(Math.random()*225)+5})`);
                         });
+                        //does serialize garuntee this callback completes *after* the previous?
+                        //res.send(chartData);
+                    }
+        });
+        db.all(`SELECT username, password, count(*) as count FROM events 
+                WHERE username IS NOT NULL GROUP BY username, password
+                ORDER BY count DESC LIMIT 7000`, function(err, rows){
+                    if(!err){
+                        chartData.tableRows = rows;
                         //does serialize garuntee this callback completes *after* the previous?
                         res.send(chartData);
                     }

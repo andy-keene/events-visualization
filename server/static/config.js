@@ -15,10 +15,10 @@ var config = {
         },
         "linesSettings": {
             "color": "#585869",
-            "alpha": 0.4
+            "alpha": 0.2
         },
         "export": {
-            "enabled": true
+            "enabled": false
         },
         "listeners": [{
             "event": "init",
@@ -30,8 +30,8 @@ var config = {
             "map": "worldLow",
             "lines": [{
               "id": "animationLine",
-              "arc": -0.85,
-              "alpha": 0.3,
+              "arc": -0.82,
+              "alpha": 0.1,
               "latitudes": [],
               "longitudes": []
             }],
@@ -78,4 +78,5 @@ var config = {
                    </div>
                  `;
         },
+    "socketErrMsg": `<div class="alert alert-danger" id="socket-error">LIVE STREAM DISCONNECTED</div>`
 }
