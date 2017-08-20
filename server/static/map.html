@@ -27,8 +27,8 @@
         <script src="/config.js"></script>
 
         <style type="text/css">
-            #map-div {
-              width: 80%;
+            #map-div{
+              width: 95%;
               height: 750px;
               margin: auto;
               border-radius: 3px;
@@ -79,14 +79,9 @@
                                             <span class="caret"></span>
                                         </button>
                                         <ul class="dropdown-menu pull-right" role="menu">
-                                            <li><a href="#">turn on map export</a>
+                                            <li><a href="#">toggle map export</a>
                                             </li>
-                                            <li><a href="#">turn off map export</a>
-                                            </li>
-                                            <li><a href="#">turn off live streaming</a>
-                                            </li>
-                                            <li class="divider"></li>
-                                            <li><a href="#">Separated link</a>
+                                            <li><a onclick="toggleLiveStream()">toggle live stream</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -129,10 +124,7 @@
 
             //socket disconnect warning
             socket.on('connect_error', function(eventData){
-                $('#map-div')
-                    .prepend(`<div class="alert alert-danger" id="socket-error">
-                                LIVE STREAM DISCONNECTED
-                              </div>`);
+                $('#map-div').prepend(config.socketErrMsg);
                 //alert('failed to connect to live stream');
                 socket.close();
             });
@@ -146,8 +138,6 @@
               success: function(response, status){
                   
                   if(!response.error){
-                    console.log('updating map');
-
                     response.events.forEach(function(event){
                         addLocationImages(eventMap, event);
                     });
@@ -186,7 +176,6 @@
             //updates images for the given events host and remote locations or adds them if they do not exist
             function addLocationImages(map, event){
                 //id images by "<longitude><latitude>"
-                console.log(event);
                 var remoteKey = event.remote_longitude.toString() + event.remote_latitude.toString();
                 var hostKey = event.host_longitude.toString() + event.host_latitude.toString();;
                 
@@ -228,6 +217,22 @@
                                                            <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
                                                            </div>`;
                 }
+            }
+
+            /* button functions */
+            function toggleLiveStream(){
+                if(socket.connected){
+                    $('#map-div').prepend(config.socketErrMsg);
+                    socket.close();
+                }
+                else {
+                    $('#socket-error').remove();
+                    socket.connect();
+                }
+            }
+
+            function toggleMapExport(){
+                //pass
             }
         </script>
     </body>
