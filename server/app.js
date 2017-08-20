@@ -98,11 +98,11 @@ app.get('/event', function(req, res) {
         res.set({
             'Content-Type': 'text/plain'
         });
-        res.send('bad query!');
+        res.send('ruh roh');
     }
     else {
         db.serialize(function() {
-            var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=?`);
+            var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=? ORDER BY time DESC LIMIT 8000`);
             stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
                 if(err){
                     res.status(500);
@@ -252,7 +252,7 @@ app.get('/events/timeLineData', function(req, res) {
     });
 
     //defines the grouing (i.e. by hour, minute, etc)
-    var timeFormat = 'YYYY-MM-DD HH:00:00';
+    var timeFormat = 'YYYY-MM-DD';
 
     db.all(`SELECT time, service FROM events
             ORDER BY time`, (err, rows)=>{
