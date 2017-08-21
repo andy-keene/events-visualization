@@ -1,0 +1,238 @@
+<html>
+    <head>
+        <!-- ammaps -->
+        <script src="ammaps/ammap.js"></script>
+        <script src="ammaps/maps/js/worldLow.js"></script>
+        <script src="ammaps/plugins/export/export.min.js"></script>
+        <link rel="ammaps/plugins/export/export.css" type="text/css" media="all" />
+        <script src="ammaps/themes/light.js"></script>
+        <!-- reqs. for bootstrap, jquery-->
+        <script type="text/javascript" src="/js/jquery-2.2.4.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css"/>
+        <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+        <!-- spinner -->
+        <script src="/js/spin.js"></script>
+        <!-- local js stuff-->
+        <script src="/js/config.js"></script> 
+        <!-- socket -->
+        <script src="/socket.io/socket.io.js"></script>
+
+        <style type="text/css">
+            #map-div{
+              width: 95%;
+              height: 750px;
+              margin: auto;
+              border-radius: 3px;
+              border-style: fill;
+              border-width: 2px;
+              border-color: black;
+            }
+            .alert-danger{
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <!--Navbar -->
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">events-visualization</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="navbar">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Data<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/geographic.html">Geographic</a></li>
+                            <li><a href="/timeline.html">Timeline</a></li>
+                            <li><a href="#">Logs</a></li>
+                            <li><a href="/logins.html">Logins</a></li>
+                            <li><a href="/export-db">Export Database</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#about">About</a></li>
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav><!-- /.Navbar -->
+        <div class="container container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <!-- eventMap panel -->
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                Geodata
+                                <div class="pull-right">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                                            Actions
+                                            <span class="caret"></span>
+                                        </button>
+                                        <ul class="dropdown-menu pull-right" role="menu">
+                                            <li><a href="#">toggle map export</a>
+                                            </li>
+                                            <li><a href="#" onclick="toggleLiveStream()">toggle live stream</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div><!-- /.panel-heading -->
+                            <div class="panel-body">
+
+                                <div id="map-div"></div>
+
+                            </div>
+                        </div> <!-- /.panel -->
+                    </div> <!-- end col -->
+                </div> <!-- end row -->
+        </div><!-- end grid --> 
+        <script type="text/javascript">
+            
+
+            //this is the object used to handle incoming socket events
+            var globalEvents = {
+                queue: [],
+                flag: false
+            };
+            var eventMap = AmCharts.makeChart("map-div", config.mapOptions);
+
+            /* socket stuff */
+
+            var socket = io.connect();
+            //enqueues recieved event for animation
+            socket.on('event', function(eventData){
+
+                console.log('incoming event: ' + event);
+                globalEvents.queue = [eventData].concat(globalEvents.queue);
+                
+                //if not currently drawing, we need to kick it off
+                if(!globalEvents.flag){
+                    globalEvents.flag = true;
+                    updateMapEvents(eventMap);
+                }
+            });
+
+            //socket disconnect warning
+            socket.on('connect_error', function(eventData){
+                $('#map-div').prepend(config.socketErrMsg);
+                //alert('failed to connect to live stream');
+                socket.close();
+            });
+
+            /* peripheral helper functions */
+
+            //populates the map data using /locationData
+            jQuery.get({
+              url: '/events/locationData',
+              dataType: "json",
+              success: function(response, status){
+                  
+                  if(!response.error){
+                    response.events.forEach(function(event){
+                        addLocationImages(eventMap, event);
+                    });
+                    eventMap.validateData();
+                    updateMapEvents(eventMap);
+                }
+              }
+            });
+
+            //animates next event in the globalEvents queue
+            function updateMapEvents(map){
+
+                if(globalEvents.queue.length > 0){
+                    //update map to draw next event
+                    event = globalEvents.queue.pop();
+
+                    //adds/updates the images to the map
+                    addLocationImages(map, event);
+
+                    //set new line for event
+                    var animationLine = map.getObjectById("animationLine");
+                    animationLine.latitudes = [event.remote_latitude, event.host_latitude];
+                    animationLine.longitudes = [event.remote_longitude, event.host_longitude];
+                    map.validateData();
+
+                    //kick-off animattion of image along line
+                    var animationImage = map.getObjectById("animationImage");
+                    animationImage.animateAlong("animationLine")
+                }
+                else {
+                    //end animation and reset flag
+                    globalEvents.flag = false;
+                }
+            }
+
+            //updates images for the given events host and remote locations or adds them if they do not exist
+            function addLocationImages(map, event){
+                //id images by "<longitude><latitude>"
+                var remoteKey = event.remote_longitude.toString() + event.remote_latitude.toString();
+                var hostKey = event.host_longitude.toString() + event.host_latitude.toString();;
+                
+                if(!map.getObjectById(remoteKey)){
+                    map.dataProvider.images.push({
+                                "id": remoteKey,
+                                "type": "circle",
+                                "color": config.serviceColors[event.service],
+                                "width": event.total_events > 10 ? 10: event.total_events || 1,      // the || is incase it is null from say a socket event.
+                                "fixedSize": true,
+                                "title": event.remote_city,
+                                "longitude": event.remote_longitude,
+                                "latitude": event.remote_latitude,
+                                //description is on-click display of indormation
+                                "description": `<div style="font-size:small;">
+                                               <b>Services</b>: ${event.services}<br>
+                                               <b>Number of events:</b> ${event.total_events}<br>
+                                               See more events originating from this location 
+                                               <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
+                                               </div>`,
+                                "descriptionWindowHeight": 150,
+                                "descriptionWindowWidth": 200,
+                                //"descriptionWindowBottom": 15,
+                                //"descriptionWindowLeft": 10,
+                                //these are local storage for us. 
+                                //"events": event.total_events || 1,
+                                "services": event.services
+                    });
+                } else {
+                    //this may be taken out, but updates the relevant image information with the new attack info.
+                    let remoteLocationImage = map.getObjectById(remoteKey);
+                    remoteLocationImage["color"] = config.serviceColors[event.service];
+                    remoteLocationImage["width"] = event.total_events > 11 ? 11: event.total_events;
+                    remoteLocationImage["services"] = event.services;
+                    remoteLocationImage["description"] = `<div style="font-size:small;">
+                                                           <b>Services</b>: ${event.services}<br>
+                                                           <b>Number of events:</b> ${event.total_events}<br>
+                                                           See more events originating from this location 
+                                                           <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
+                                                           </div>`;
+                }
+            }
+
+            /* button functions */
+            function toggleLiveStream(){
+                if(socket.connected){
+                    $('#map-div').prepend(config.socketErrMsg);
+                    socket.close();
+                }
+                else {
+                    $('#socket-error').remove();
+                    socket.connect();
+                }
+            }
+
+            function toggleMapExport(){
+                //pass
+            }
+        </script>
+    </body>
+</html>

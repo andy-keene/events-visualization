@@ -43,24 +43,33 @@
     </head>
     <body>
 
-        <!--Navbar -->
+        <<!--Navbar -->
         <nav class="navbar navbar-default">
           <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
-              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
                 <span class="sr-only">Toggle navigation</span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">ssh-events</a>
+              <a class="navbar-brand" href="#">events-visualization</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-              <ul class="nav navbar-nav">
-                <li><a href="#home">Home </a></li>
-                <li><a href="#about">About</a></li>
+            <div class="collapse navbar-collapse" id="navbar">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Data<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/geographic.html">Geographic</a></li>
+                            <li><a href="/timeline.html">Timeline</a></li>
+                            <li><a href="#">Logs</a></li>
+                            <li><a href="/logins">Logins</a></li>
+                            <li><a href="#">Export Database</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#about">About</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
@@ -81,7 +90,7 @@
                                         <ul class="dropdown-menu pull-right" role="menu">
                                             <li><a href="#">toggle map export</a>
                                             </li>
-                                            <li><a onclick="toggleLiveStream()">toggle live stream</a>
+                                            <li><a href="#" onclick="toggleLiveStream()">toggle live stream</a>
                                             </li>
                                         </ul>
                                     </div>

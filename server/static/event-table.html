@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="View network based attacks">
+        <meta name="author" content="Many">
+        <title>Data - Location Log</title>
+
+         <!-- reqs. for bootstrap and datatable in single file -->
+        <link rel="stylesheet" type="text/css" href="/css/datatables.min.css"/>
+        <script type="text/javascript" src="/js/datatables.min.js"></script>
+        <!-- spinner -->
+        <script src="/js/spin.js"></script>
+        <!-- local js stuff-->
+        <script src="/js/config.js"></script>
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <style type="text/css">
+            #loader {
+                width: 100%;
+                height: 350px;
+                vertical-align: middle;
+                text-align: center;
+            }          
+        </style>
+
+    </head>
+    <body>
+       <!--Navbar -->
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">events-visualization</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="navbar">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Data<span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/geographic.html">Geographic</a></li>
+                            <li><a href="/timeline.html">Timeline</a></li>
+                            <li><a href="#">Logs</a></li>
+                            <li><a href="/logins.html">Logins</a></li>
+                            <li><a href="#">Export Database</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#about">About</a></li>
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav><!-- /.Navbar -->
+        <div class="container container-fluid">
+            <div class="row" id="loader-row">
+                <div class="col-md-12">
+                    <div id="loader" style="height:300px; text-align: center;"></div>
+                </div> <!-- end loader row -->
+            </div>
+			<div class="row" id="table-row" style="visibility: hidden;">
+                <div class="col-md-12">
+
+                    <div class="panel panel-default"">
+                        <div class="panel-heading">
+                            Logs for: {{#functionLocation}}{{events.1.remote_city}},{{events.0.remote_country_name}}{{/functionLocation}}
+                        </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                            
+                            <table width="100%" class="table table-striped table-bordered table-hover"  id="eventTable">
+									<thead>
+										<tr>
+											<th>Date</th>
+											<th>Time</th>
+											<th>Service</th>
+											<th>Type</th>
+											<th>Username</th>
+											<th>Password</th>
+											<th>Remote IP</th>
+											<th>Host IP</th>
+											<!--<th>description(other)</th>-->
+										</tr>
+									</thead>
+
+									{{#events}}
+									<tr>
+											<td>{{#functionDate}}{{time}}{{/functionDate}}</td>
+											<td>{{#functionTime}}{{time}}{{/functionTime}}</td>
+											<td>{{service}}</td>
+											<td>{{type}}</td>
+											<td>
+												{{#username}}{{username}}{{/username}}{{^username}}-{{/username}}
+											</td>
+											<td>
+												{{#password}}{{password}}{{/password}}{{^password}}-{{/password}}
+											</td>
+											<td>{{remote_ip}}</td>
+											<td>{{host_ip}}</td>
+											<!--<td>{{description}}</td>-->
+									</tr>
+									{{/events}}
+
+									<tbody>
+									</tbody>
+
+								</table>
+							</div><!-- panel body -->
+						</div><!-- panel-default -->
+					</div><!--col -->
+				</div> <!-- row -->
+		</div><!-- container-->
+        
+        <script>
+
+        var spinner = new Spinner().spin();
+        $('#loader').append(spinner.el);
+
+        $(document).ready(function() {
+            $('#eventTable').DataTable({
+                //on render, remove the loader icon and display the table
+                "initComplete": function(settings, json) {
+                    $('#loader-row').remove();
+                    $('#table-row').css({
+                        'visibility': 'visible'
+                    });
+                    
+                },
+                responsive: true
+            });
+        });
+        </script>
+    </body>
+</html>
