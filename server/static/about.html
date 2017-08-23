@@ -46,35 +46,50 @@
                             <li><a href="#">Export Database</a></li>
                         </ul>
                     </li>
-                    <li><a href="#about">About</a></li>
+                    <li><a href="/about.html">About</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
         </nav><!-- /.Navbar -->
         <div class="container container-fluid">
-            <div class="jumbotron">
+            
                 <div class="row">
-                    <div class="col col-md-6 col-md-offset-3">
-                        <article>
-                            <h3> About </h3>
-                            <p> events-visualization was built as a project for a web development class to both expiriment with Node and to attempt t</p>
-                            <p> This site was developed as a gift over the four weeks of winter break in 2016. Please note that this site is currently in beta aonly be worked on intermittently. However, if you find issues or have concerns or comments, the staff (of one) here at Owl's Librarlove to hear from you! You can contact me at https://github.com/andy-keene.  </p>
-                                    
-                            <blockquote class="blockquote blockquote-reverse">
-                              <p class="mb-0">
-                                    The more that you read, the more things you will know. The more you learn, the more places you’ll go.
-                               </p>
-                               <footer class="blockquote-footer">
-                                    Dr. Suess, 
-                                  <cite title="Source Title">
-                                     I Can Read With My Eyes Shut!
-                                  </cite>
-                               </footer>
-                            </blockquote>
-                        </article><!-- ./about info -->
+                    <div class="col col-md-12">
+                        <div class="panel panel-default"">
+                            <div class="panel-heading">
+                            About
+                            </div>
+                        <!-- /.panel-heading -->
+                        <div class="panel-body">
+                        <div class="jumbotron" style="background-color: white;">
+                            <article>
+                                
+                                <p>events-visualization was a project built for a full stack web development class. The goal of this project, beyond expirementing with javascript, was to visualize the prevelence of network-based brute force attacks for those who may not be familiar with them. Additionally, with further analysis trends may be identified. </p>
+                                <p> The architecture of the project can be summarized in three parts:
+                                    <ul>
+                                        <li>The honeypot runs a modified version of openSSH which records attempted logins, including username and password combinations. A python script then parses and POSTs this data to the web server.</li>
+                                        <li>The web server, running NodeJS, stores all event data in the SQLite database, emits the events to connected sockets for live-streaming, serves both dynamic and static html pages, and retrieves the appropriate data for GET requests.</li>
+                                        <li>The client simply uses AJAX calls and socket streams to retrieve formatted event data for the visualizations. The visualizations include: a geographic plot of where events originated from (live streamed), a log of all events originating from a specified location, a timeline of total events, and a chart of the most common attempted login credentials.</li>
+                                    </ul>
+                                </p>
+                                        
+                                <blockquote class="blockquote blockquote-reverse">
+                                  <p class="mb-0">
+                                        The more that you read, the more things you will know. The more you learn, the more places you’ll go.
+                                   </p>
+                                   <footer class="blockquote-footer">
+                                        Dr. Suess, 
+                                      <cite title="Source Title">
+                                         I Can Read With My Eyes Shut!
+                                      </cite>
+                                   </footer>
+                                </blockquote>
+                            </article><!-- ./about info -->
+                            </div> <!-- end jomo -->
+                        </div> <!-- ./panel -->
                     </div> <!-- end col -->
                 </div> <!-- end row -->
-            </div> <!-- end jomo -->
+            
         </div><!-- end grid --> 
         <script>
         </script>
