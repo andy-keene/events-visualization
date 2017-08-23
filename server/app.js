@@ -12,7 +12,6 @@ var app = express();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-
 //database init (create if it does not exist)
 var db = new sqlite3.Database('events.db');
 db.run(`CREATE TABLE IF NOT EXISTS events (
@@ -41,13 +40,14 @@ io.on('connection', function(clientSocket){
 
 //basic root
 app.get('/', function(req, res) {
-    io.emit('event', {'hey' : 'there'})
     res.status(200);
     res.set({
         'Content-type': 'text/plain'
     });
+    res.setHeader('Content-type', 'text/html');
 
-    res.send('welcome to the events app');
+    var filestream = fs.createReadStream('./static/home.html');
+    filestream.pipe(res);
 });
 
 //POST event for storage
@@ -102,7 +102,10 @@ app.get('/event', function(req, res) {
     }
     else {
         db.serialize(function() {
-            var stmt = db.prepare(`SELECT * from events WHERE remote_longitude=? AND remote_latitude=? ORDER BY time DESC LIMIT 8000`);
+            var stmt = db.prepare(`SELECT * from events
+                                   WHERE remote_longitude=? AND remote_latitude=?
+                                   ORDER BY time
+                                   DESC LIMIT 8000`);
             stmt.all(req.query.longitude, req.query.latitude, function(err, rows){
                 if(err){
                     res.status(500);
@@ -195,7 +198,7 @@ app.get('/recentEvents', function(req, res) {
         'Content-Disposition': 'attachment; filename=events.json'
     });
 
-    var yesterday = moment().utc().add(-3, 'days').valueOf() / 1000;
+    var yesterday = moment().utc().add(-1, 'days').valueOf() / 1000;
     var stmt = db.prepare(`SELECT * FROM events WHERE time > ?`);
     stmt.all(yesterday, (err, rows)=>{
         if(err){
@@ -213,6 +216,15 @@ app.get('/recentEvents', function(req, res) {
             });
         }
     });
+});
+
+//download the current database as an attachment
+app.get('/export-db', function(req, res) {
+    res.setHeader('Content-disposition', 'attachment; filename=events.sqlite3');
+    res.setHeader('Content-type', 'application/x-sqlite');
+
+    var filestream = fs.createReadStream('./events.db');
+    filestream.pipe(res);
 });
 
 //GET event details for given query location, <longitude> and <latitude>
