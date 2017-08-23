@@ -1,6 +1,6 @@
 # events-visualization
 events-visualization was a project built for a full stack web development class. The goal of this project, beyond expirementing with javascript, was 
-to visualizate the prevelence of network-based brute force attacks to those who may not be familiar with them. Additionally, with further analysis trends may be identified. 
+to visualize the prevelence of network-based brute force attacks for those who may not be familiar with them. Additionally, with further analysis trends may be identified. 
 
 The architecture of the project can be summarized in three parts:
 - **The honeypot** runs a modified version of openSSH which records attempted logins, including username and password combinations. A python script then 
@@ -14,7 +14,7 @@ Example pages:
 ## Instructions
 
 ### HoneyPot
-1. Prerequisite: `gcc`, `virtualenv`, `python3`
+1. Prerequisites: `gcc`, `virtualenv`, `python3`
 1. Navigate to `/honeypot/ssh` and run `sudo bash install_openssh.sh`. This will both download and install the modifed version of openSSH - 
 1. Edit the line from `Port 22` to `Port 48000` in the systems SSH configuration (`/etc/ssh/sshd_config`). This will be the port you login to, as authentication on port 22 will be blocked.
 1. Restart the `sshd` daemon with `sudo service restart ssh` and run `sudo /usr/local/sbin/sshd-22 -f /usr/local/etc/sshd_config-22` `sudo /usr/local/sbin/sshd-2222 -f /usr/local/etc/sshd_config-2222` to bind each sshd instance with the appropriate configuration.
@@ -33,10 +33,9 @@ Connect to the honeypot over port listed in `sshd_config`(i.e. port 48000). If t
 ### Web Server
 1. Prerequisites: `Forever`, `node`
 1. From `/server` install the dependencies with `npm install`
-1. Run the application using `forever start app.js`. This allows the app to be restarted on failure. Likewise `forever stop <app-id>` can be used to temporarily stop the server inbetween updates.
+1. Run the application on port 8080 using `forever start app.js`. This allows the app to be restarted on failure. Likewise `forever stop <app-id>` can be used to temporarily stop the server inbetween updates.
 
-
-## Config notes
+### Config notes
 To block IPs via IP tables, use the following command:
 `sudo iptables -I INPUT -s <ip> -p tcp --dport ssh -j REJECT`
 
