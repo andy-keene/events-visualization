@@ -30,7 +30,7 @@ var config = {
             "map": "worldLow",
             "lines": [{
               "id": "animationLine",
-              "arc": -0.9,
+              "arc": -0.81,
               "alpha": 0.2,
               "latitudes": [],
               "longitudes": []
