@@ -7,8 +7,8 @@ var config = {
         },
         "imagesSettings": {
             "color": "#585869",
-            "rollOverColor": "#FF5869",
-            "selectedColor": "#585869",
+            "rollOverColor": "#AAB0FF",
+            "selectedColor": "#51314F",
             "pauseDuration": 0.2,
             "animationDuration": 2.5,
             "adjustAnimationSpeed": true
@@ -30,8 +30,8 @@ var config = {
             "map": "worldLow",
             "lines": [{
               "id": "animationLine",
-              "arc": -0.82,
-              "alpha": 0.1,
+              "arc": -0.9,
+              "alpha": 0.2,
               "latitudes": [],
               "longitudes": []
             }],
@@ -39,7 +39,7 @@ var config = {
                 "id": "animationImage",
                 "type": "circle",
                 "positionOnLine": 0,
-                //"color": "#585869",
+                "color": "#E24438",
                 "animateAlongLine": true,
                 "lineId": "animationLine",  // this in needed for chart.validateData() to rerender the animation
                 "scale": 0.5,
@@ -81,5 +81,5 @@ var config = {
         "#F1EDEE",
         "#545E75",
     ],
-    "socketErrMsg": `<div class="alert alert-danger" id="socket-error">LIVE STREAM DISCONNECTED</div>`
+    "socketErrMsg": `<div class="alert alert-danger" id="socket-error">live stream disconnected</div>`
 }

@@ -8,7 +8,7 @@
         <script src="ammaps/themes/light.js"></script>
         <!-- reqs. for bootstrap, jquery-->
         <script type="text/javascript" src="/js/jquery-2.2.4.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css"/>
+        <link rel="stylesheet" type="text/css" href="/css/BootStrap-3.3.7/css/bootstrap.min.css"/>
         <script type="text/javascript" src="/js/bootstrap.min.js"></script>
         <!-- spinner -->
         <script src="/js/spin.js"></script>
@@ -20,7 +20,7 @@
         <style type="text/css">
             #map-div{
               width: 95%;
-              height: 750px;
+              height: 550px;
               margin: auto;
               border-radius: 3px;
               border-style: fill;
@@ -44,23 +44,22 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">events-visualization</a>
+              <a class="navbar-brand" href="/home.html">events-visualization</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="navbar">
                 <ul class="nav navbar-nav">
-                    <li class="dropdown">
-                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">Data<span class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/geographic.html">Geographic</a></li>
+                            <li class="active"><a href="/geographic.html">Geographic</a></li>
                             <li><a href="/timeline.html">Timeline</a></li>
-                            <li><a href="#">Logs</a></li>
-                            <li><a href="/logins.html">Logins</a></li>
-                            <li><a href="/export-db">Export Database</a></li>
-                        </ul>
+                            <li><a href="/logins.html">Login Attempts</a></li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="/export-db">
+                            <span class="glyphicon glyphicon-download"></span> Download DB
+                        </a>
                     </li>
-                    <li><a href="/about.html">About</a></li>
-              </ul>
+                </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
         </nav><!-- /.Navbar -->
@@ -70,20 +69,11 @@
                         <!-- eventMap panel -->
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                Geodata
-                                <div class="pull-right">
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
-                                            Actions
-                                            <span class="caret"></span>
-                                        </button>
-                                        <ul class="dropdown-menu pull-right" role="menu">
-                                            <li><a href="#">toggle map export</a>
-                                            </li>
-                                            <li><a href="#" onclick="toggleLiveStream()">toggle live stream</a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                Geodata - Streaming
+                                <div class="pull-right">                                    
+                                        <button type="button" class="btn btn-default btn-xs" onclick="toggleLiveStream()">
+                                            toggle live stream
+                                            </button>                          
                                 </div>
                             </div><!-- /.panel-heading -->
                             <div class="panel-body">
@@ -183,13 +173,13 @@
                                 "id": remoteKey,
                                 "type": "circle",
                                 "color": config.serviceColors[event.service],
-                                "width": event.total_events > 10 ? 10: event.total_events || 1,      // the || is incase it is null from say a socket event.
+                                "width": event.total_events > 1000 ? 11 : 6,
                                 "fixedSize": true,
                                 "title": event.remote_city,
                                 "longitude": event.remote_longitude,
                                 "latitude": event.remote_latitude,
                                 //description is on-click display of indormation
-                                "description": `<div style="font-size:small;">
+                                "description": `<div style="font-size:small;background-color:white;">
                                                <b>Services</b>: ${event.services}<br>
                                                <b>Number of events:</b> ${event.total_events}<br>
                                                See more events originating from this location 
@@ -197,8 +187,8 @@
                                                </div>`,
                                 "descriptionWindowHeight": 150,
                                 "descriptionWindowWidth": 200,
-                                //"descriptionWindowBottom": 15,
-                                //"descriptionWindowLeft": 10,
+                                "descriptionWindowTop": 15,
+                                "descriptionWindowRight": 10,
                                 //these are local storage for us. 
                                 //"events": event.total_events || 1,
                                 "services": event.services
@@ -209,7 +199,7 @@
                     remoteLocationImage["color"] = config.serviceColors[event.service];
                     remoteLocationImage["width"] = event.total_events > 11 ? 11: event.total_events;
                     remoteLocationImage["services"] = event.services;
-                    remoteLocationImage["description"] = `<div style="font-size:small;">
+                    remoteLocationImage["description"] = `<div style="font-size:small;background-color:white;">
                                                            <b>Services</b>: ${event.services}<br>
                                                            <b>Number of events:</b> ${event.total_events}<br>
                                                            See more events originating from this location 
@@ -230,10 +220,6 @@
                     $('#socket-error').remove();
                     socket.connect();
                 }
-            }
-
-            function toggleMapExport(){
-                //pass
             }
         </script>
     </body>
