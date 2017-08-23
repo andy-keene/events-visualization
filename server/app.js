@@ -116,7 +116,7 @@ app.get('/event', function(req, res) {
                     res.set({
                         'Content-Type': 'text/html'
                     });
-                    fs.readFile('./static/eventTable.html', function(err, data) {
+                    fs.readFile('./static/event-table.html', function(err, data) {
 
                         res.write(mustache.render(data.toString(), {
                             events: rows,
