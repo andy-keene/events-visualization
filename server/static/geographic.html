@@ -221,7 +221,9 @@
             /* button functions */
             function toggleLiveStream(){
                 if(socket.connected){
+                    //flush queue
                     $('#map-div').prepend(config.socketErrMsg);
+                    globalEvents.queue = [];
                     socket.close();
                 }
                 else {
