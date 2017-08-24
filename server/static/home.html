@@ -19,11 +19,15 @@
         <script src="/js/config.js"></script>
 
          <style type="text/css">
-            li {
+            .jumbo-li {
               font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
               margin: auto;
               font-size: 18px;
               font-weight: 200;
+            }
+            .jumbotron {
+                background-color: white;
+                padding: 10px;
             }
         </style>
 
@@ -65,7 +69,7 @@
                     <div class="col col-md-12">
                         <div class="panel panel-default"">
                             <div class="panel-heading">
-                            Weclome to events-visualizations
+                            Weclome
                             </div>
                         <!-- /.panel-heading -->
                         <div class="panel-body">
@@ -74,9 +78,9 @@
                                 <p>events-visualization was a project built for a full stack web development class. The goal of this project, beyond experimenting with javascript, was to visualize the prevalence of network-based brute force attacks for those who may not be familiar with them. Additionally, further human analysis may identify certain trends; for instance, why do we see so many attempts to login using 'openelec' as a password? (see <a href="http://wiki.openelec.tv/index.php/OpenELEC_FAQ#How_do_I_change_the_SSH_password.3F" target="_blank"s>openelec.com/faq</a>)</p>
                                 <p> The project architecture may be summarized as follows:
                                     <ul>
-                                        <li>The honeypot runs a modified version of openSSH which records attempted logins, including username and password combinations. A python script then parses and POSTs this data to the web server.</li>
-                                        <li>The web server, running NodeJS, stores all event data in the SQLite database, emits the events to connected sockets for live-streaming, serves both dynamic and static html pages, and retrieves the appropriate data for GET requests.</li>
-                                        <li>The client simply uses AJAX calls and socket streams to retrieve formatted event data for the visualizations. The visualizations include: a geographic plot of where events originated from (live streamed), a log of all events originating from a specified location, a timeline of total events, and a chart of the most common attempted login credentials.</li>
+                                        <li class="jumbo-li">The honeypot runs a modified version of openSSH which records attempted logins, including username and password combinations. A python script then parses and POSTs this data to the web server.</li>
+                                        <li class="jumbo-li">The web server, running NodeJS, stores all event data in the SQLite database, emits the events to connected sockets for live-streaming, serves both dynamic and static html pages, and retrieves the appropriate data for GET requests.</li>
+                                        <li class="jumbo-li">The client simply uses AJAX calls and socket streams to retrieve formatted event data for the visualizations. The visualizations include: a geographic plot of where events originated from (live streamed), a log of all events originating from a specified location, a timeline of total events, and a chart of the most common attempted login credentials.</li>
                                     </ul>
                                 </p>
 
