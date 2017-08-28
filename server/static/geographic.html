@@ -187,7 +187,7 @@
                                 "longitude": event.remote_longitude,
                                 "latitude": event.remote_latitude,
                                 //description is on-click display of indormation
-                                "description": `<div style="font-size:small;background-color:white;">
+                                "description": `<div style="font-size:small;">
                                                <b>Services</b>: ${event.services}<br>
                                                <b>Number of events:</b> ${event.total_events}<br>
                                                See more events originating from this location 
@@ -197,8 +197,6 @@
                                 "descriptionWindowWidth": 200,
                                 "descriptionWindowTop": 15,
                                 "descriptionWindowRight": 10,
-                                //these are local storage for us. 
-                                //"events": event.total_events || 1,
                                 "services": event.services
                     });
                 } else {
@@ -207,7 +205,7 @@
                     remoteLocationImage["color"] = config.serviceColors[event.service];
                     remoteLocationImage["width"] = event.total_events > 11 ? 11: event.total_events;
                     remoteLocationImage["services"] = event.services;
-                    remoteLocationImage["description"] = `<div style="font-size:small;background-color:white;">
+                    remoteLocationImage["description"] = `<div style="font-size:small;">
                                                            <b>Services</b>: ${event.services}<br>
                                                            <b>Number of events:</b> ${event.total_events}<br>
                                                            See more events originating from this location 
@@ -215,6 +213,27 @@
                                                            </div>`;
                 }
             }
+            if(!map.getObjectById(hostKey)){
+                    map.dataProvider.images.push({
+                                "id": hostKey,
+                                //"type": "circle",
+                                "svgPath": config.svgs.target,
+                                //"color": config.serviceColors[event.service],
+                                "width": 8,
+                                "fixedSize": true,
+                                "title": event.remote_city,
+                                "longitude": event.remote_longitude,
+                                "latitude": event.remote_latitude,
+                                //description is on-click display of indormation
+                                "description": `<div style="font-size:small;">
+                                               <b>Host IP</b>: ${event.host_ip}`,
+                                "descriptionWindowHeight": 150,
+                                "descriptionWindowWidth": 200,
+                                "descriptionWindowTop": 15,
+                                "descriptionWindowRight": 10,
+                                "services": event.services
+                    });
+                }
 
             /* button functions */
             function toggleLiveStream(){
