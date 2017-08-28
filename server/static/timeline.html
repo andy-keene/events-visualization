@@ -89,7 +89,8 @@
                         data: response["timeLines"][service].data,
                         labels: response["timeLines"][service].labels,
                         borderWidth: 1,
-                        fill: true
+                        fill: false,
+                        lineTension: 0.3
                     });
                 }
                 timeLine.update();
