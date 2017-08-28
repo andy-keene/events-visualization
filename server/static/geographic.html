@@ -212,8 +212,7 @@
                                                            <a href="/event?longitude=${event.remote_longitude}&latitude=${event.remote_latitude}" target="_blank">here</a>
                                                            </div>`;
                 }
-            }
-            if(!map.getObjectById(hostKey)){
+                if(!map.getObjectById(hostKey)){
                     map.dataProvider.images.push({
                                 "id": hostKey,
                                 //"type": "circle",
@@ -234,7 +233,8 @@
                                 "services": event.services
                     });
                 }
-
+            }
+            
             /* button functions */
             function toggleLiveStream(){
                 if(socket.connected){
