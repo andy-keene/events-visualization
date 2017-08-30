@@ -8,8 +8,25 @@ parses and POSTs this data to the web server.
 - **The web server**, running NodeJS, stores all event data in the SQLite database, emits the events to connected sockets for live-streaming, serves both dynamic and static html pages, and retrieves the appropriate data for GET requests.
 - **The client** simply uses AJAX calls and socket streams to retrieve formatted event data for the visualizations. The visualizations include: a geographic plot of where events originated from (live streamed), a log of all events originating from a specified location, a timeline of total events, and a chart of the most common attempted login credentials. 
 
-Example pages:
-???
+## Screenshots
+1. _geographic plot of unique locations where attacks originate from (with live stream of events)_
+![screen shot 2017-08-28 at 12 21 26 pm](https://user-images.githubusercontent.com/20017363/29888729-c5e0fcba-8d76-11e7-8e31-1358c0720e10.png)
+
+1. _drill down on an attack location_
+![screen shot 2017-08-28 at 12 20 45 pm](https://user-images.githubusercontent.com/20017363/29888750-d2398bb2-8d76-11e7-9c4e-5aec1775df61.png)
+
+1. _pop up link from drill down showing last 8000 events from the specified location_
+![screen shot 2017-08-28 at 12 32 09 pm](https://user-images.githubusercontent.com/20017363/29888811-f26f984a-8d76-11e7-93fb-c7e36865aab8.png)
+
+1. _timeline, by day, of number of events_
+![screen shot 2017-08-28 at 12 21 36 pm](https://user-images.githubusercontent.com/20017363/29888806-efe2930c-8d76-11e7-88eb-8df2861a5886.png)
+
+1. _login attempts showing the top 10 attempted usernames and top 10 attempted passwords_
+![screen shot 2017-08-28 at 12 22 59 pm](https://user-images.githubusercontent.com/20017363/29888741-cd32bad0-8d76-11e7-9327-55aac3511bee.png)
+
+1. _login attempts table showing the top 7000 most commin username and password combinations_
+![screen shot 2017-08-28 at 12 23 32 pm](https://user-images.githubusercontent.com/20017363/29888769-dc0559aa-8d76-11e7-9f21-633f9ce0ab73.png)
+
 
 ## Instructions
 
